@@ -1,0 +1,1241 @@
+import React, { useState, useMemo } from 'react';
+
+// Alle 60 stellingen gegroepeerd per thema met ik/school markering
+const themas = [
+  {
+    id: 1,
+    naam: "Visie en koers",
+    kleur: "#4F46E5",
+    vragen: [
+      { id: 1, tekst: "Ik vind digitale geletterdheid net zo belangrijk als andere basisvaardigheden op school.", type: "ik" },
+      { id: 2, tekst: "Ik kan in gewone taal uitleggen waarom digitale geletterdheid belangrijk is voor onze leerlingen.", type: "ik" },
+      { id: 3, tekst: "Ik heb een duidelijk beeld van wat leerlingen op onze school hierover moeten leren.", type: "ik" },
+      { id: 4, tekst: "Ik zie digitale geletterdheid niet als iets extra's, maar als onderdeel van goed onderwijs.", type: "ik" },
+      { id: 5, tekst: "Ik weet hoe digitale geletterdheid past bij onze leerlingen en bij onze school.", type: "ik" },
+      { id: 6, tekst: "De koers van onze school helpt mij om gerichte keuzes te maken in mijn groep.", type: "ik" },
+      { id: 7, tekst: "Binnen ons team vinden we digitale geletterdheid echt belangrijk.", type: "school" },
+      { id: 8, tekst: "Op onze school is duidelijk waarom we met digitale geletterdheid bezig zijn.", type: "school" },
+      { id: 9, tekst: "Op onze school is duidelijk waar we met digitale geletterdheid naartoe werken.", type: "school" },
+      { id: 10, tekst: "Binnen ons team praten we op een vergelijkbare manier over digitale geletterdheid.", type: "school" },
+      { id: 11, tekst: "Op onze school is zichtbaar welke plek digitale geletterdheid inneemt in het onderwijs.", type: "school" },
+      { id: 12, tekst: "Op onze school is digitale geletterdheid iets voor de lange termijn en niet iets tijdelijks.", type: "school" }
+    ]
+  },
+  {
+    id: 2,
+    naam: "Bekwaamheid en zelfvertrouwen",
+    kleur: "#10B981",
+    vragen: [
+      { id: 13, tekst: "Ik voel mij bekwaam genoeg om les te geven over digitale geletterdheid.", type: "ik" },
+      { id: 14, tekst: "Ik weet wat wel en niet onder digitale geletterdheid valt.", type: "ik" },
+      { id: 15, tekst: "Ik kan leerdoelen voor digitale geletterdheid koppelen aan mijn eigen groep.", type: "ik" },
+      { id: 16, tekst: "Ik kan digitale geletterdheid vertalen naar haalbare lessen in de klas.", type: "ik" },
+      { id: 17, tekst: "Ik voel mij zeker genoeg om met leerlingen in gesprek te gaan over digitale onderwerpen.", type: "ik" },
+      { id: 18, tekst: "Ik kan bewust kiezen wanneer technologie in een les echt iets toevoegt en wanneer niet.", type: "ik" },
+      { id: 19, tekst: "Ik geef zelf het goede voorbeeld in hoe ik met digitale middelen en media omga.", type: "ik" },
+      { id: 20, tekst: "Ik weet genoeg van de digitale leefwereld van mijn leerlingen om daarop aan te sluiten.", type: "ik" },
+      { id: 21, tekst: "Binnen ons team is genoeg kennis aanwezig om digitale geletterdheid goed aan te pakken.", type: "school" },
+      { id: 22, tekst: "Collega's leren op onze school van elkaar op het gebied van digitale geletterdheid.", type: "school" },
+      { id: 23, tekst: "Op onze school wordt groei van leerkrachten op digitale geletterdheid serieus genomen.", type: "school" },
+      { id: 24, tekst: "Ik weet bij wie ik terechtkan als ik hulp nodig heb op dit gebied.", type: "ik" }
+    ]
+  },
+  {
+    id: 3,
+    naam: "Lespraktijk en didactiek",
+    kleur: "#F59E0B",
+    vragen: [
+      { id: 25, tekst: "Ik geef regelmatig lessen of activiteiten waarin digitale geletterdheid zichtbaar aan bod komt.", type: "ik" },
+      { id: 26, tekst: "Ik kan digitale geletterdheid koppelen aan vakken, thema's of projecten die ik al geef.", type: "ik" },
+      { id: 27, tekst: "Ik maak bewust keuzes tussen leren met schermen en leren zonder schermen.", type: "ik" },
+      { id: 28, tekst: "Ik gebruik werkvormen waarbij leerlingen actief onderzoeken, maken, bespreken of reflecteren.", type: "ik" },
+      { id: 29, tekst: "Ik help leerlingen om kritisch na te denken over wat zij online zien, doen en delen.", type: "ik" },
+      { id: 30, tekst: "Op onze school heeft digitale geletterdheid een herkenbare plek in de dagelijkse lespraktijk.", type: "school" },
+      { id: 31, tekst: "Op onze school zijn duidelijke afspraken over hoe digitale geletterdheid in de klas terugkomt.", type: "school" },
+      { id: 32, tekst: "Binnen ons team delen we lesideeën en werkvormen rond digitale geletterdheid met elkaar.", type: "school" },
+      { id: 33, tekst: "Op onze school gebeurt digitale geletterdheid niet alleen af en toe, maar structureel.", type: "school" },
+      { id: 34, tekst: "Op onze school leren leerlingen digitale technologie niet alleen gebruiken, maar ook begrijpen.", type: "school" }
+    ]
+  },
+  {
+    id: 4,
+    naam: "Inhoudelijke dekking",
+    kleur: "#EF4444",
+    vragen: [
+      { id: 35, tekst: "Ik weet dat digitale geletterdheid uit meerdere onderdelen bestaat.", type: "ik" },
+      { id: 36, tekst: "Ik zie het verschil tussen alleen digitale vaardigheden oefenen en echt begrip opbouwen.", type: "ik" },
+      { id: 37, tekst: "In mijn onderwijs gaat digitale geletterdheid over meer dan alleen apparaten of mediawijsheid.", type: "ik" },
+      { id: 38, tekst: "Ik kan leerlingen begeleiden bij het zoeken, beoordelen en gebruiken van digitale informatie.", type: "ik" },
+      { id: 39, tekst: "Ik kan veiligheid, privacy en online gedrag op een passende manier bespreken in mijn groep.", type: "ik" },
+      { id: 40, tekst: "Op onze school komen de verschillende onderdelen van digitale geletterdheid breed genoeg aan bod.", type: "school" },
+      { id: 41, tekst: "Op onze school gaat digitale geletterdheid niet alleen over doen, maar ook over begrijpen en kritisch denken.", type: "school" },
+      { id: 42, tekst: "Binnen ons team is duidelijk welke onderdelen van digitale geletterdheid nog te weinig aandacht krijgen.", type: "school" },
+      { id: 43, tekst: "Op onze school is er aandacht voor actuele thema's zoals AI, beïnvloeding en digitale balans.", type: "school" },
+      { id: 44, tekst: "De inhoud van digitale geletterdheid wordt op onze school steeds breder en sterker ingevuld.", type: "school" }
+    ]
+  },
+  {
+    id: 5,
+    naam: "Randvoorwaarden en ondersteuning",
+    kleur: "#8B5CF6",
+    vragen: [
+      { id: 45, tekst: "Ik heb genoeg tijd om digitale geletterdheid voor te bereiden of in mijn onderwijs op te nemen.", type: "ik" },
+      { id: 46, tekst: "Ik weet welke lessen, materialen of bronnen ik kan gebruiken voor digitale geletterdheid.", type: "ik" },
+      { id: 47, tekst: "Ik krijg genoeg praktische steun om hiermee aan de slag te gaan.", type: "ik" },
+      { id: 48, tekst: "Ik beschik in mijn groep over werkbare digitale middelen als ik die nodig heb.", type: "ik" },
+      { id: 49, tekst: "Op onze school zijn voldoende materialen of bronnen beschikbaar voor digitale geletterdheid.", type: "school" },
+      { id: 50, tekst: "De digitale infrastructuur van onze school werkt goed genoeg om dit onderwijs te ondersteunen.", type: "school" },
+      { id: 51, tekst: "Op onze school is duidelijk wie hierin een trekkende of coördinerende rol heeft.", type: "school" },
+      { id: 52, tekst: "Op onze school hangt digitale geletterdheid niet af van een paar enthousiaste collega's.", type: "school" }
+    ]
+  },
+  {
+    id: 6,
+    naam: "Ontwikkeling, evaluatie en borging",
+    kleur: "#06B6D4",
+    vragen: [
+      { id: 53, tekst: "Ik weet welke ontwikkeling ik bij leerlingen wil zien op het gebied van digitale geletterdheid.", type: "ik" },
+      { id: 54, tekst: "Ik kan zien waar mijn leerlingen al sterk in zijn en waar zij nog moeten groeien.", type: "ik" },
+      { id: 55, tekst: "Ik denk bewust na over wat in mijn aanpak al goed werkt en wat nog beter kan.", type: "ik" },
+      { id: 56, tekst: "Ik gebruik observaties, gesprekken of leerlingwerk om zicht te krijgen op groei in digitale geletterdheid.", type: "ik" },
+      { id: 57, tekst: "Binnen ons team bespreken we wat goed gaat en wat nog aandacht vraagt rond digitale geletterdheid.", type: "school" },
+      { id: 58, tekst: "Op onze school hebben we zicht op sterke en zwakke punten in digitale geletterdheid.", type: "school" },
+      { id: 59, tekst: "Op onze school kiezen we duidelijke prioriteiten in plaats van alles tegelijk te willen.", type: "school" },
+      { id: 60, tekst: "Op onze school worden gemaakte keuzes rond digitale geletterdheid ook vastgehouden en uitgebouwd.", type: "school" }
+    ]
+  }
+];
+
+// Scorebanden
+const getScoreband = (score) => {
+  if (score <= 1.80) return { niveau: "Nog niet", kleur: "#DC2626", achtergrond: "#FEE2E2" };
+  if (score <= 2.60) return { niveau: "Ad hoc", kleur: "#F97316", achtergrond: "#FFEDD5" };
+  if (score <= 3.40) return { niveau: "In ontwikkeling", kleur: "#EAB308", achtergrond: "#FEF9C3" };
+  if (score <= 4.20) return { niveau: "Meestal zichtbaar", kleur: "#22C55E", achtergrond: "#DCFCE7" };
+  return { niveau: "Stevig ingebed", kleur: "#16A34A", achtergrond: "#BBF7D0" };
+};
+
+// Route definities
+const routes = [
+  {
+    id: 1,
+    naam: "Visie eerst",
+    beschrijving: "De school heeft eerst richting nodig voordat verdere implementatie zinvol is.",
+    conclusie: "Teamleden vinden het onderwerp misschien wel belangrijk, maar weten nog niet goed waarom of waar de school naartoe wil. Er is weinig gezamenlijke taal. Digitale geletterdheid voelt nog als 'iets erbij'.",
+    interventies: ["Visiesessie met team", "Kernwaarden en ambitie formuleren", "Bepalen wat leerlingen aan eind groep 8 moeten kennen", "Prioriteiten voor komend schooljaar kiezen"],
+    voorwaarden: (scores) => scores[0] < 2.6 && scores[0] <= Math.min(...scores)
+  },
+  {
+    id: 2,
+    naam: "Teambekwaamheid versterken",
+    beschrijving: "Het team heeft scholing, voorbeeldgedrag en concrete handvatten nodig.",
+    conclusie: "Het team wil wel, maar leerkrachten voelen zich nog onzeker. Inhoud en aanpak zijn nog onvoldoende eigen gemaakt.",
+    interventies: ["Teamtraining digitale geletterdheid basis", "Praktische vertaalslag van kerndoelen naar klas", "Voorbeeldlessen", "Collegiale uitwisseling organiseren"],
+    voorwaarden: (scores) => scores[1] < 2.8 && scores[0] >= 2.6 && scores[1] <= Math.min(scores[1], scores[2], scores[3], scores[4], scores[5])
+  },
+  {
+    id: 3,
+    naam: "Van losse activiteiten naar lespraktijk",
+    beschrijving: "De school heeft vooral hulp nodig bij de vertaalslag naar concrete lespraktijk.",
+    conclusie: "Er gebeurt wel iets, maar het is incidenteel. Digitale geletterdheid landt nog niet echt in het rooster of in de klas.",
+    interventies: ["Voorbeeldlessen ontwikkelen", "Koppeling aan bestaande vakken en thema's", "Per bouw 2-3 concrete lesroutes maken", "Opbrengsten samen terugkoppelen"],
+    voorwaarden: (scores) => scores[2] < 3.0 && scores[0] >= 2.6 && scores[1] >= 2.6 && scores[2] <= Math.min(scores[2], scores[3], scores[4], scores[5])
+  },
+  {
+    id: 4,
+    naam: "Inhoud verbreden en verdiepen",
+    beschrijving: "De school heeft inhoudelijke verbreding nodig.",
+    conclusie: "De school doet al wel iets, maar vooral op een klein deel van digitale geletterdheid. Bijvoorbeeld vooral mediawijsheid of online veiligheid.",
+    interventies: ["Inhoudelijke scan: wat doen we al, wat ontbreekt?", "Verdieping op kerndoelen", "Thematische modules (digitale systemen, data & AI, programmeren)", "Borgen in aanbod per bouw"],
+    voorwaarden: (scores) => scores[3] < 3.0 && scores[0] >= 2.6 && scores[1] >= 2.6 && scores[2] >= 2.6 && scores[3] <= Math.min(scores[3], scores[4], scores[5])
+  },
+  {
+    id: 5,
+    naam: "Structuur en randvoorwaarden op orde",
+    beschrijving: "De school heeft geen inhoudsprobleem als eerste, maar een organisatorisch probleem.",
+    conclusie: "Het team wil wel, maar tijd, materiaal, coördinatie of infrastructuur werken tegen. Ontwikkeling hangt af van losse kartrekkers.",
+    interventies: ["Implementatieplan opstellen", "Heldere rolverdeling maken", "Jaarplanning of fasering maken", "Afspraken met directie en ICT-coördinator"],
+    voorwaarden: (scores) => scores[4] < 3.0 && scores[4] <= Math.min(scores[4], scores[5]) && Math.max(scores[0], scores[1]) >= 3.0
+  },
+  {
+    id: 6,
+    naam: "Borgen, volgen en doorontwikkelen",
+    beschrijving: "De school heeft niet eerst meer inspiratie nodig, maar meer stevigheid en samenhang.",
+    conclusie: "Er gebeurt al veel, maar de school heeft nog te weinig zicht op effect en vervolgstappen. Keuzes zijn nog kwetsbaar.",
+    interventies: ["Evaluatiekader opstellen", "Prioriteiten bepalen", "Ontwikkeldoelen per bouw formuleren", "Borging in jaarplan of schoolplan"],
+    voorwaarden: (scores) => scores[5] < 3.2 && Math.min(scores[0], scores[1], scores[2], scores[3]) >= 3.4
+  }
+];
+
+// Groeikader beschrijvingen per thema
+const groeikader = {
+  1: {
+    "Nog niet": "Er is nog geen heldere gezamenlijke richting. Teamleden denken verschillend over nut, doel en plek van digitale geletterdheid.",
+    "Ad hoc": "Het onderwerp wordt wel belangrijk gevonden, maar vooral in losse gesprekken of door enkele collega's. Er is nog geen duidelijke koers.",
+    "In ontwikkeling": "Het team is bezig om woorden te geven aan waarom dit belangrijk is en waar de school naartoe wil, maar het is nog niet scherp of breed gedragen.",
+    "Meestal zichtbaar": "Er is een herkenbare koers. De meeste teamleden weten waarom dit belangrijk is en welke kant de school op wil.",
+    "Stevig ingebed": "De school heeft een heldere, gedeelde visie die zichtbaar is in taal, keuzes en prioriteiten."
+  },
+  2: {
+    "Nog niet": "Veel leerkrachten voelen zich onzeker en missen kennis, taal en praktische handvatten.",
+    "Ad hoc": "Er is wat kennis aanwezig, maar die zit bij enkele collega's. De rest kijkt nog zoekend of afwachtend.",
+    "In ontwikkeling": "Leerkrachten bouwen kennis en vertrouwen op. Er zijn eerste voorbeelden en gesprekken, maar nog duidelijke verschillen in het team.",
+    "Meestal zichtbaar": "De meeste leerkrachten voelen zich behoorlijk toegerust en kunnen digitale geletterdheid redelijk vertalen naar hun groep.",
+    "Stevig ingebed": "Bekwaamheid is schoolbreed aanwezig. Leerkrachten maken bewuste keuzes, geven zelf het goede voorbeeld en leren actief van elkaar."
+  },
+  3: {
+    "Nog niet": "Digitale geletterdheid is nauwelijks zichtbaar in lessen of klaspraktijk.",
+    "Ad hoc": "Er zijn losse lessen of projecten, maar nog zonder vaste lijn of herkenbare didactiek.",
+    "In ontwikkeling": "Leerkrachten proberen werkvormen uit en leggen koppelingen met vakken of thema's. Het groeit, maar nog niet overal even sterk.",
+    "Meestal zichtbaar": "Het onderwerp heeft een herkenbare plek in de dagelijkse praktijk en leerkrachten maken bewuste didactische keuzes.",
+    "Stevig ingebed": "Digitale geletterdheid is structureel en didactisch doordacht onderdeel van het onderwijs."
+  },
+  4: {
+    "Nog niet": "De school heeft nog een smal beeld van digitale geletterdheid. Vaak blijft het bij apparaten of online veiligheid.",
+    "Ad hoc": "Sommige onderdelen komen wel aan bod, maar los van elkaar en niet evenwichtig.",
+    "In ontwikkeling": "Het team krijgt beter zicht op de breedte van digitale geletterdheid. Meer onderdelen komen terug, maar nog niet in balans.",
+    "Meestal zichtbaar": "De inhoud is breed en herkenbaar aanwezig. Er is zicht op wat nog ontbreekt.",
+    "Stevig ingebed": "De school werkt breed en evenwichtig aan alle onderdelen van digitale geletterdheid."
+  },
+  5: {
+    "Nog niet": "Tijd, middelen, ondersteuning en organisatie ontbreken grotendeels.",
+    "Ad hoc": "Er is wel iets, maar los en niet structureel geregeld. Het hangt af van toeval of inzet van enkele mensen.",
+    "In ontwikkeling": "De school werkt aan tijd, middelen en organisatie, maar de basis draagt nog niet iedereen.",
+    "Meestal zichtbaar": "De randvoorwaarden zijn redelijk op orde en helpen leerkrachten vooruit.",
+    "Stevig ingebed": "De organisatorische basis ondersteunt digitale geletterdheid echt: tijd, middelen, rolverdeling en ondersteuning zijn duidelijk geregeld."
+  },
+  6: {
+    "Nog niet": "De school heeft weinig zicht op voortgang, sterke punten of ontwikkelbehoeften.",
+    "Ad hoc": "Er wordt soms teruggekeken, maar los en zonder vaste lijn.",
+    "In ontwikkeling": "De school krijgt meer zicht op wat goed gaat en wat nog aandacht vraagt. Er ontstaan eerste prioriteiten.",
+    "Meestal zichtbaar": "Evaluatie en ontwikkeling krijgen een duidelijke plek. De school leert van ervaringen en maakt bewustere keuzes.",
+    "Stevig ingebed": "De school werkt planmatig aan verbetering en borging. Ontwikkeling wordt gevolgd, besproken en vastgehouden."
+  }
+};
+
+// Radardiagram component
+const RadarChart = ({ scores, labels, ikScores, schoolScores, showComparison }) => {
+  const size = 300;
+  const center = size / 2;
+  const radius = 120;
+  const levels = 5;
+
+  const getCoordinates = (index, value, total) => {
+    const angle = (Math.PI * 2 * index) / total - Math.PI / 2;
+    const r = (value / 5) * radius;
+    return {
+      x: center + r * Math.cos(angle),
+      y: center + r * Math.sin(angle)
+    };
+  };
+
+  const createPath = (values) => {
+    return values.map((value, i) => {
+      const coord = getCoordinates(i, value, values.length);
+      return `${i === 0 ? 'M' : 'L'} ${coord.x} ${coord.y}`;
+    }).join(' ') + ' Z';
+  };
+
+  return (
+    <svg width={size} height={size} style={{ maxWidth: '100%', height: 'auto' }}>
+      {/* Grid lijnen */}
+      {[1, 2, 3, 4, 5].map(level => (
+        <polygon
+          key={level}
+          points={scores.map((_, i) => {
+            const coord = getCoordinates(i, level, scores.length);
+            return `${coord.x},${coord.y}`;
+          }).join(' ')}
+          fill="none"
+          stroke="#E5E7EB"
+          strokeWidth="1"
+        />
+      ))}
+
+      {/* Assen */}
+      {scores.map((_, i) => {
+        const coord = getCoordinates(i, 5, scores.length);
+        return (
+          <line
+            key={i}
+            x1={center}
+            y1={center}
+            x2={coord.x}
+            y2={coord.y}
+            stroke="#E5E7EB"
+            strokeWidth="1"
+          />
+        );
+      })}
+
+      {/* Vergelijking: Ik scores (blauw) */}
+      {showComparison && ikScores && (
+        <path
+          d={createPath(ikScores)}
+          fill="rgba(59, 130, 246, 0.2)"
+          stroke="#3B82F6"
+          strokeWidth="2"
+        />
+      )}
+
+      {/* Vergelijking: School scores (oranje) */}
+      {showComparison && schoolScores && (
+        <path
+          d={createPath(schoolScores)}
+          fill="rgba(249, 115, 22, 0.2)"
+          stroke="#F97316"
+          strokeWidth="2"
+        />
+      )}
+
+      {/* Totaal scores (paars) - alleen als geen vergelijking */}
+      {!showComparison && (
+        <path
+          d={createPath(scores)}
+          fill="rgba(139, 92, 246, 0.3)"
+          stroke="#8B5CF6"
+          strokeWidth="3"
+        />
+      )}
+
+      {/* Score punten */}
+      {!showComparison && scores.map((score, i) => {
+        const coord = getCoordinates(i, score, scores.length);
+        return (
+          <circle
+            key={i}
+            cx={coord.x}
+            cy={coord.y}
+            r="6"
+            fill="#8B5CF6"
+            stroke="white"
+            strokeWidth="2"
+          />
+        );
+      })}
+
+      {/* Labels */}
+      {labels.map((label, i) => {
+        const coord = getCoordinates(i, 5.8, scores.length);
+        return (
+          <text
+            key={i}
+            x={coord.x}
+            y={coord.y}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            style={{ fontSize: '10px', fill: '#374151', fontWeight: '500' }}
+          >
+            {label.split(' ').slice(0, 2).join(' ')}
+          </text>
+        );
+      })}
+    </svg>
+  );
+};
+
+// Hoofdcomponent
+export default function NulmetingDigitaleGeletterdheid() {
+  const [pagina, setPagina] = useState('intro'); // intro, invullen, resultaten
+  const [huidigThema, setHuidigThema] = useState(0);
+  const [antwoorden, setAntwoorden] = useState({});
+  const [toonVergelijking, setToonVergelijking] = useState(false);
+
+  // Bereken voortgang per thema
+  const voortgangPerThema = useMemo(() => {
+    return themas.map(thema => {
+      const beantwoord = thema.vragen.filter(v => antwoorden[v.id] !== undefined).length;
+      return (beantwoord / thema.vragen.length) * 100;
+    });
+  }, [antwoorden]);
+
+  // Bereken scores per thema
+  const scoresPerThema = useMemo(() => {
+    return themas.map(thema => {
+      const scores = thema.vragen
+        .filter(v => antwoorden[v.id] !== undefined)
+        .map(v => antwoorden[v.id]);
+      if (scores.length === 0) return 0;
+      return scores.reduce((a, b) => a + b, 0) / scores.length;
+    });
+  }, [antwoorden]);
+
+  // Bereken ik-scores per thema
+  const ikScoresPerThema = useMemo(() => {
+    return themas.map(thema => {
+      const ikVragen = thema.vragen.filter(v => v.type === 'ik');
+      const scores = ikVragen
+        .filter(v => antwoorden[v.id] !== undefined)
+        .map(v => antwoorden[v.id]);
+      if (scores.length === 0) return 0;
+      return scores.reduce((a, b) => a + b, 0) / scores.length;
+    });
+  }, [antwoorden]);
+
+  // Bereken school-scores per thema
+  const schoolScoresPerThema = useMemo(() => {
+    return themas.map(thema => {
+      const schoolVragen = thema.vragen.filter(v => v.type === 'school');
+      const scores = schoolVragen
+        .filter(v => antwoorden[v.id] !== undefined)
+        .map(v => antwoorden[v.id]);
+      if (scores.length === 0) return 0;
+      return scores.reduce((a, b) => a + b, 0) / scores.length;
+    });
+  }, [antwoorden]);
+
+  // Bepaal passende route
+  const passendeRoute = useMemo(() => {
+    if (scoresPerThema.every(s => s === 0)) return null;
+    
+    // Vind de laagste score(s)
+    const minScore = Math.min(...scoresPerThema.filter(s => s > 0));
+    const laagsteThemaIndex = scoresPerThema.findIndex(s => s === minScore);
+    
+    // Route logica gebaseerd op laagste thema
+    if (laagsteThemaIndex === 0 || scoresPerThema[0] < 2.6) {
+      return routes[0]; // Route 1: Visie eerst
+    }
+    if (scoresPerThema[1] < 2.8 && scoresPerThema[0] >= 2.6) {
+      return routes[1]; // Route 2: Teambekwaamheid
+    }
+    if (scoresPerThema[2] < 3.0 && scoresPerThema[0] >= 2.6 && scoresPerThema[1] >= 2.6) {
+      return routes[2]; // Route 3: Lespraktijk
+    }
+    if (scoresPerThema[3] < 3.0 && scoresPerThema[0] >= 2.6 && scoresPerThema[1] >= 2.6 && scoresPerThema[2] >= 2.6) {
+      return routes[3]; // Route 4: Inhoud
+    }
+    if (scoresPerThema[4] < 3.0 && Math.max(scoresPerThema[0], scoresPerThema[1]) >= 3.0) {
+      return routes[4]; // Route 5: Randvoorwaarden
+    }
+    if (Math.min(scoresPerThema[0], scoresPerThema[1], scoresPerThema[2], scoresPerThema[3]) >= 3.4 && scoresPerThema[5] < 3.2) {
+      return routes[5]; // Route 6: Borging
+    }
+    
+    // Default: laagste thema bepaalt route
+    return routes[Math.min(laagsteThemaIndex, routes.length - 1)];
+  }, [scoresPerThema]);
+
+  // Check of alle vragen zijn beantwoord
+  const alleVragenBeantwoord = useMemo(() => {
+    const totaalVragen = themas.reduce((acc, t) => acc + t.vragen.length, 0);
+    return Object.keys(antwoorden).length === totaalVragen;
+  }, [antwoorden]);
+
+  // Handler voor antwoord selectie
+  const handleAntwoord = (vraagId, score) => {
+    setAntwoorden(prev => ({ ...prev, [vraagId]: score }));
+  };
+
+  // Intro pagina
+  if (pagina === 'intro') {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        padding: '20px',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      }}>
+        <div style={{ 
+          maxWidth: '800px', 
+          margin: '0 auto', 
+          background: 'white', 
+          borderRadius: '24px', 
+          padding: '40px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+        }}>
+          <h1 style={{ 
+            fontSize: '2rem', 
+            fontWeight: '700', 
+            color: '#1F2937', 
+            marginBottom: '16px',
+            textAlign: 'center'
+          }}>
+            Nulmeting Digitale Geletterdheid
+          </h1>
+          <p style={{ 
+            color: '#6B7280', 
+            textAlign: 'center', 
+            marginBottom: '32px',
+            fontSize: '1.1rem'
+          }}>
+            Voor leerkrachten in het basisonderwijs
+          </p>
+
+          <div style={{ 
+            background: '#F9FAFB', 
+            borderRadius: '16px', 
+            padding: '24px', 
+            marginBottom: '32px' 
+          }}>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#374151', marginBottom: '16px' }}>
+              Wat kun je verwachten?
+            </h2>
+            <ul style={{ color: '#4B5563', lineHeight: '1.8', paddingLeft: '20px' }}>
+              <li><strong>60 stellingen</strong> verdeeld over 6 thema's</li>
+              <li>Score per stelling van <strong>1 (helemaal niet) tot 5 (helemaal wel)</strong></li>
+              <li>Direct inzicht in je <strong>sterke punten en groeikansen</strong></li>
+              <li>Vergelijking tussen <strong>individueel (ik)</strong> en <strong>teamperspectief (school)</strong></li>
+              <li>Persoonlijk <strong>route-advies</strong> voor verdere ontwikkeling</li>
+            </ul>
+          </div>
+
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+            gap: '12px', 
+            marginBottom: '32px' 
+          }}>
+            {themas.map(thema => (
+              <div 
+                key={thema.id} 
+                style={{ 
+                  padding: '16px', 
+                  borderRadius: '12px', 
+                  background: thema.kleur + '15',
+                  borderLeft: `4px solid ${thema.kleur}`
+                }}
+              >
+                <div style={{ fontSize: '0.85rem', fontWeight: '600', color: thema.kleur }}>
+                  Thema {thema.id}
+                </div>
+                <div style={{ fontSize: '0.9rem', color: '#374151', marginTop: '4px' }}>
+                  {thema.naam}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setPagina('invullen')}
+            style={{
+              width: '100%',
+              padding: '16px 32px',
+              fontSize: '1.1rem',
+              fontWeight: '600',
+              color: 'white',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              border: 'none',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              transition: 'transform 0.2s, box-shadow 0.2s'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 10px 20px rgba(102, 126, 234, 0.4)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = 'none';
+            }}
+          >
+            Start de nulmeting
+          </button>
+
+          <p style={{ 
+            textAlign: 'center', 
+            color: '#9CA3AF', 
+            fontSize: '0.85rem', 
+            marginTop: '16px' 
+          }}>
+            Geschatte tijd: 10-15 minuten
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Invullen pagina
+  if (pagina === 'invullen') {
+    const thema = themas[huidigThema];
+    
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        background: '#F3F4F6',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      }}>
+        {/* Header */}
+        <div style={{ 
+          background: 'white', 
+          borderBottom: '1px solid #E5E7EB',
+          position: 'sticky',
+          top: 0,
+          zIndex: 100
+        }}>
+          <div style={{ maxWidth: '900px', margin: '0 auto', padding: '16px 20px' }}>
+            {/* Thema tabs */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '8px', 
+              overflowX: 'auto',
+              paddingBottom: '8px'
+            }}>
+              {themas.map((t, index) => (
+                <button
+                  key={t.id}
+                  onClick={() => setHuidigThema(index)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: huidigThema === index ? `2px solid ${t.kleur}` : '2px solid transparent',
+                    background: huidigThema === index ? t.kleur + '20' : '#F9FAFB',
+                    color: huidigThema === index ? t.kleur : '#6B7280',
+                    fontWeight: '500',
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <span>{t.id}. {t.naam}</span>
+                  {voortgangPerThema[index] === 100 && (
+                    <span style={{ color: '#10B981' }}>✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Voortgangsbalk */}
+            <div style={{ marginTop: '12px' }}>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                fontSize: '0.8rem', 
+                color: '#6B7280',
+                marginBottom: '4px'
+              }}>
+                <span>Thema {thema.id}: {thema.naam}</span>
+                <span>{Math.round(voortgangPerThema[huidigThema])}% voltooid</span>
+              </div>
+              <div style={{ 
+                height: '8px', 
+                background: '#E5E7EB', 
+                borderRadius: '4px', 
+                overflow: 'hidden' 
+              }}>
+                <div style={{ 
+                  height: '100%', 
+                  width: `${voortgangPerThema[huidigThema]}%`,
+                  background: thema.kleur,
+                  borderRadius: '4px',
+                  transition: 'width 0.3s ease'
+                }} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Vragen */}
+        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px 20px' }}>
+          {thema.vragen.map((vraag, index) => (
+            <div 
+              key={vraag.id}
+              style={{
+                background: 'white',
+                borderRadius: '16px',
+                padding: '24px',
+                marginBottom: '16px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                borderLeft: `4px solid ${vraag.type === 'ik' ? '#3B82F6' : '#F97316'}`
+              }}
+            >
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'flex-start', 
+                gap: '12px',
+                marginBottom: '16px'
+              }}>
+                <span style={{
+                  background: thema.kleur + '20',
+                  color: thema.kleur,
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  fontSize: '0.8rem',
+                  fontWeight: '600'
+                }}>
+                  {index + 1}
+                </span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ 
+                    color: '#1F2937', 
+                    fontSize: '1rem', 
+                    lineHeight: '1.6',
+                    margin: 0
+                  }}>
+                    {vraag.tekst}
+                  </p>
+                  <span style={{
+                    display: 'inline-block',
+                    marginTop: '8px',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    fontWeight: '500',
+                    background: vraag.type === 'ik' ? '#DBEAFE' : '#FFEDD5',
+                    color: vraag.type === 'ik' ? '#1D4ED8' : '#C2410C'
+                  }}>
+                    {vraag.type === 'ik' ? 'Individueel perspectief' : 'Teamperspectief'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Score buttons */}
+              <div style={{ 
+                display: 'flex', 
+                gap: '8px',
+                flexWrap: 'wrap'
+              }}>
+                {[1, 2, 3, 4, 5].map(score => (
+                  <button
+                    key={score}
+                    onClick={() => handleAntwoord(vraag.id, score)}
+                    style={{
+                      flex: '1 1 60px',
+                      minWidth: '60px',
+                      padding: '12px 8px',
+                      borderRadius: '8px',
+                      border: antwoorden[vraag.id] === score 
+                        ? `2px solid ${thema.kleur}` 
+                        : '2px solid #E5E7EB',
+                      background: antwoorden[vraag.id] === score 
+                        ? thema.kleur 
+                        : 'white',
+                      color: antwoorden[vraag.id] === score 
+                        ? 'white' 
+                        : '#374151',
+                      fontWeight: '600',
+                      fontSize: '1rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {score}
+                  </button>
+                ))}
+              </div>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                marginTop: '8px',
+                fontSize: '0.75rem',
+                color: '#9CA3AF'
+              }}>
+                <span>Helemaal niet</span>
+                <span>Helemaal wel</span>
+              </div>
+            </div>
+          ))}
+
+          {/* Navigatie */}
+          <div style={{ 
+            display: 'flex', 
+            gap: '12px', 
+            marginTop: '24px',
+            flexWrap: 'wrap'
+          }}>
+            {huidigThema > 0 && (
+              <button
+                onClick={() => setHuidigThema(huidigThema - 1)}
+                style={{
+                  flex: 1,
+                  minWidth: '120px',
+                  padding: '14px 24px',
+                  borderRadius: '10px',
+                  border: '2px solid #E5E7EB',
+                  background: 'white',
+                  color: '#374151',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                ← Vorige thema
+              </button>
+            )}
+            
+            {huidigThema < themas.length - 1 ? (
+              <button
+                onClick={() => setHuidigThema(huidigThema + 1)}
+                style={{
+                  flex: 1,
+                  minWidth: '120px',
+                  padding: '14px 24px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: thema.kleur,
+                  color: 'white',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Volgende thema →
+              </button>
+            ) : (
+              <button
+                onClick={() => setPagina('resultaten')}
+                disabled={!alleVragenBeantwoord}
+                style={{
+                  flex: 1,
+                  minWidth: '120px',
+                  padding: '14px 24px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: alleVragenBeantwoord 
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    : '#D1D5DB',
+                  color: 'white',
+                  fontWeight: '600',
+                  cursor: alleVragenBeantwoord ? 'pointer' : 'not-allowed'
+                }}
+              >
+                Bekijk resultaten
+              </button>
+            )}
+          </div>
+
+          {!alleVragenBeantwoord && huidigThema === themas.length - 1 && (
+            <p style={{ 
+              textAlign: 'center', 
+              color: '#EF4444', 
+              fontSize: '0.9rem', 
+              marginTop: '12px' 
+            }}>
+              Beantwoord alle vragen om de resultaten te bekijken
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Resultaten pagina
+  if (pagina === 'resultaten') {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        background: '#F3F4F6',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        paddingBottom: '40px'
+      }}>
+        {/* Header */}
+        <div style={{ 
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          padding: '40px 20px',
+          color: 'white',
+          textAlign: 'center'
+        }}>
+          <h1 style={{ fontSize: '1.8rem', fontWeight: '700', margin: 0 }}>
+            Jouw Resultaten
+          </h1>
+          <p style={{ opacity: 0.9, marginTop: '8px' }}>
+            Nulmeting Digitale Geletterdheid
+          </p>
+        </div>
+
+        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px 20px' }}>
+          {/* Radardiagram */}
+          <div style={{ 
+            background: 'white', 
+            borderRadius: '20px', 
+            padding: '24px',
+            marginBottom: '24px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.07)'
+          }}>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#1F2937', marginBottom: '16px' }}>
+              Overzicht per thema
+            </h2>
+            
+            {/* Toggle voor vergelijking */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              gap: '12px', 
+              marginBottom: '20px',
+              flexWrap: 'wrap'
+            }}>
+              <button
+                onClick={() => setToonVergelijking(false)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: !toonVergelijking ? '2px solid #8B5CF6' : '2px solid #E5E7EB',
+                  background: !toonVergelijking ? '#8B5CF6' : 'white',
+                  color: !toonVergelijking ? 'white' : '#6B7280',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                Totaalscore
+              </button>
+              <button
+                onClick={() => setToonVergelijking(true)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: toonVergelijking ? '2px solid #8B5CF6' : '2px solid #E5E7EB',
+                  background: toonVergelijking ? '#8B5CF6' : 'white',
+                  color: toonVergelijking ? 'white' : '#6B7280',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                Ik vs. School
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <RadarChart 
+                scores={scoresPerThema}
+                labels={themas.map(t => t.naam)}
+                ikScores={ikScoresPerThema}
+                schoolScores={schoolScoresPerThema}
+                showComparison={toonVergelijking}
+              />
+            </div>
+
+            {toonVergelijking && (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                gap: '24px', 
+                marginTop: '16px' 
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '16px', height: '4px', background: '#3B82F6', borderRadius: '2px' }} />
+                  <span style={{ fontSize: '0.85rem', color: '#374151' }}>Ik (individueel)</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '16px', height: '4px', background: '#F97316', borderRadius: '2px' }} />
+                  <span style={{ fontSize: '0.85rem', color: '#374151' }}>School (team)</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Scores per thema */}
+          <div style={{ 
+            background: 'white', 
+            borderRadius: '20px', 
+            padding: '24px',
+            marginBottom: '24px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.07)'
+          }}>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#1F2937', marginBottom: '20px' }}>
+              Scores per thema
+            </h2>
+
+            {themas.map((thema, index) => {
+              const score = scoresPerThema[index];
+              const band = getScoreband(score);
+              const ikScore = ikScoresPerThema[index];
+              const schoolScore = schoolScoresPerThema[index];
+              const verschil = ikScore - schoolScore;
+              
+              return (
+                <div 
+                  key={thema.id}
+                  style={{
+                    padding: '20px',
+                    borderRadius: '12px',
+                    background: '#F9FAFB',
+                    marginBottom: '12px',
+                    borderLeft: `4px solid ${thema.kleur}`
+                  }}
+                >
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'flex-start',
+                    flexWrap: 'wrap',
+                    gap: '12px'
+                  }}>
+                    <div>
+                      <h3 style={{ 
+                        fontSize: '1rem', 
+                        fontWeight: '600', 
+                        color: '#1F2937',
+                        margin: 0
+                      }}>
+                        {thema.id}. {thema.naam}
+                      </h3>
+                      <p style={{ 
+                        fontSize: '0.85rem', 
+                        color: '#6B7280', 
+                        margin: '8px 0 0 0',
+                        maxWidth: '500px'
+                      }}>
+                        {groeikader[thema.id][band.niveau]}
+                      </p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ 
+                        fontSize: '1.5rem', 
+                        fontWeight: '700', 
+                        color: band.kleur 
+                      }}>
+                        {score.toFixed(2)}
+                      </div>
+                      <div style={{
+                        display: 'inline-block',
+                        padding: '4px 12px',
+                        borderRadius: '6px',
+                        background: band.achtergrond,
+                        color: band.kleur,
+                        fontSize: '0.8rem',
+                        fontWeight: '600'
+                      }}>
+                        {band.niveau}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ik vs School vergelijking */}
+                  <div style={{ 
+                    marginTop: '16px',
+                    paddingTop: '16px',
+                    borderTop: '1px solid #E5E7EB'
+                  }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      gap: '24px',
+                      flexWrap: 'wrap',
+                      marginBottom: '8px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ 
+                          padding: '2px 8px', 
+                          background: '#DBEAFE', 
+                          color: '#1D4ED8',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: '500'
+                        }}>IK</span>
+                        <span style={{ fontWeight: '600', color: '#3B82F6' }}>
+                          {ikScore.toFixed(2)}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ 
+                          padding: '2px 8px', 
+                          background: '#FFEDD5', 
+                          color: '#C2410C',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: '500'
+                        }}>SCHOOL</span>
+                        <span style={{ fontWeight: '600', color: '#F97316' }}>
+                          {schoolScore.toFixed(2)}
+                        </span>
+                      </div>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '4px',
+                        color: Math.abs(verschil) < 0.3 ? '#6B7280' : verschil > 0 ? '#3B82F6' : '#F97316'
+                      }}>
+                        <span style={{ fontSize: '0.85rem' }}>Verschil:</span>
+                        <span style={{ fontWeight: '600' }}>
+                          {verschil > 0 ? '+' : ''}{verschil.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Duiding van het verschil */}
+                    {Math.abs(verschil) >= 0.5 && (
+                      <div style={{
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        background: verschil > 0 ? '#DBEAFE' : '#FFEDD5',
+                        fontSize: '0.85rem',
+                        color: verschil > 0 ? '#1E40AF' : '#9A3412'
+                      }}>
+                        {verschil > 0 
+                          ? "→ Je individuele motivatie en bekwaamheid zijn sterker dan de schoolstructuur. De school kan beter ondersteunen."
+                          : "→ De school denkt dat het goed staat, maar je voelt je als leerkracht nog niet volledig toegerust."
+                        }
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Route advies */}
+          {passendeRoute && (
+            <div style={{ 
+              background: 'white', 
+              borderRadius: '20px', 
+              padding: '24px',
+              marginBottom: '24px',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.07)',
+              border: '2px solid #8B5CF6'
+            }}>
+              <div style={{
+                display: 'inline-block',
+                padding: '6px 14px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                borderRadius: '20px',
+                fontSize: '0.85rem',
+                fontWeight: '600',
+                marginBottom: '16px'
+              }}>
+                Aanbevolen Route
+              </div>
+              
+              <h2 style={{ 
+                fontSize: '1.4rem', 
+                fontWeight: '700', 
+                color: '#1F2937',
+                margin: '0 0 12px 0'
+              }}>
+                Route {passendeRoute.id}: {passendeRoute.naam}
+              </h2>
+              
+              <p style={{ 
+                color: '#4B5563', 
+                lineHeight: '1.7',
+                marginBottom: '20px'
+              }}>
+                {passendeRoute.beschrijving}
+              </p>
+
+              <div style={{
+                background: '#F3F4F6',
+                borderRadius: '12px',
+                padding: '20px',
+                marginBottom: '20px'
+              }}>
+                <h3 style={{ 
+                  fontSize: '1rem', 
+                  fontWeight: '600', 
+                  color: '#374151',
+                  marginBottom: '12px'
+                }}>
+                  Wat zegt de nulmeting?
+                </h3>
+                <p style={{ color: '#4B5563', lineHeight: '1.6', margin: 0 }}>
+                  {passendeRoute.conclusie}
+                </p>
+              </div>
+
+              <h3 style={{ 
+                fontSize: '1rem', 
+                fontWeight: '600', 
+                color: '#374151',
+                marginBottom: '12px'
+              }}>
+                Eerste interventies
+              </h3>
+              <ul style={{ 
+                margin: 0, 
+                paddingLeft: '0',
+                listStyle: 'none'
+              }}>
+                {passendeRoute.interventies.map((interventie, i) => (
+                  <li 
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '12px',
+                      padding: '10px 0',
+                      borderBottom: i < passendeRoute.interventies.length - 1 ? '1px solid #E5E7EB' : 'none'
+                    }}
+                  >
+                    <span style={{
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      background: '#8B5CF6',
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      flexShrink: 0
+                    }}>
+                      {i + 1}
+                    </span>
+                    <span style={{ color: '#374151' }}>{interventie}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Scorebanden legenda */}
+          <div style={{ 
+            background: 'white', 
+            borderRadius: '20px', 
+            padding: '24px',
+            marginBottom: '24px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.07)'
+          }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#1F2937', marginBottom: '16px' }}>
+              Scorebanden
+            </h2>
+            <div style={{ display: 'grid', gap: '8px' }}>
+              {[
+                { range: '1.00 – 1.80', niveau: 'Nog niet', kleur: '#DC2626', bg: '#FEE2E2' },
+                { range: '1.81 – 2.60', niveau: 'Ad hoc', kleur: '#F97316', bg: '#FFEDD5' },
+                { range: '2.61 – 3.40', niveau: 'In ontwikkeling', kleur: '#EAB308', bg: '#FEF9C3' },
+                { range: '3.41 – 4.20', niveau: 'Meestal zichtbaar', kleur: '#22C55E', bg: '#DCFCE7' },
+                { range: '4.21 – 5.00', niveau: 'Stevig ingebed', kleur: '#16A34A', bg: '#BBF7D0' }
+              ].map(band => (
+                <div 
+                  key={band.niveau}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '10px 14px',
+                    background: band.bg,
+                    borderRadius: '8px'
+                  }}
+                >
+                  <span style={{ 
+                    fontWeight: '600', 
+                    color: band.kleur,
+                    minWidth: '100px'
+                  }}>
+                    {band.range}
+                  </span>
+                  <span style={{ color: '#374151' }}>{band.niveau}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Opnieuw starten */}
+          <div style={{ textAlign: 'center' }}>
+            <button
+              onClick={() => {
+                setAntwoorden({});
+                setHuidigThema(0);
+                setPagina('intro');
+              }}
+              style={{
+                padding: '14px 32px',
+                borderRadius: '10px',
+                border: '2px solid #E5E7EB',
+                background: 'white',
+                color: '#374151',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Opnieuw beginnen
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
