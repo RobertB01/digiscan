@@ -20,6 +20,27 @@
         }
         #root {
             min-height: 100vh;
+            position: relative;
+        }
+        /* Watermark logo */
+        #root::before {
+            content: '';
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 400px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='90' fill='none' stroke='%231E88E5' stroke-width='3' opacity='0.08'/%3E%3Ccircle cx='100' cy='100' r='70' fill='none' stroke='%2326A69A' stroke-width='3' opacity='0.08'/%3E%3Ccircle cx='100' cy='100' r='50' fill='none' stroke='%23FBC02D' stroke-width='3' opacity='0.08'/%3E%3Cpath d='M100 30 L100 50 M100 150 L100 170 M30 100 L50 100 M150 100 L170 100' stroke='%231E88E5' stroke-width='2' opacity='0.06'/%3E%3Cpath d='M55 55 L70 70 M130 130 L145 145 M55 145 L70 130 M130 70 L145 55' stroke='%2326A69A' stroke-width='2' opacity='0.06'/%3E%3Ctext x='100' y='105' text-anchor='middle' font-size='18' font-weight='600' fill='%231E88E5' opacity='0.07'%3EDigiScan%3C/text%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+            pointer-events: none;
+            z-index: 0;
+        }
+        #root > * {
+            position: relative;
+            z-index: 1;
         }
     </style>
 </head>
@@ -29,12 +50,19 @@
     <script type="text/babel">
         const { useState, useMemo } = React;
 
+        // Logo kleuren
+        const KLEUREN = {
+          blauw: '#1E88E5',
+          teal: '#26A69A', 
+          geel: '#FBC02D'
+        };
+
         // Alle 60 stellingen gegroepeerd per thema met ik/school markering
         const themas = [
           {
             id: 1,
             naam: "Visie en koers",
-            kleur: "#4F46E5",
+            kleur: "#1E88E5",
             vragen: [
               { id: 1, tekst: "Ik vind digitale geletterdheid net zo belangrijk als andere basisvaardigheden op school.", type: "ik" },
               { id: 2, tekst: "Ik kan in gewone taal uitleggen waarom digitale geletterdheid belangrijk is voor onze leerlingen.", type: "ik" },
@@ -53,7 +81,7 @@
           {
             id: 2,
             naam: "Bekwaamheid en zelfvertrouwen",
-            kleur: "#10B981",
+            kleur: "#26A69A",
             vragen: [
               { id: 13, tekst: "Ik voel mij bekwaam genoeg om les te geven over digitale geletterdheid.", type: "ik" },
               { id: 14, tekst: "Ik weet wat wel en niet onder digitale geletterdheid valt.", type: "ik" },
@@ -72,7 +100,7 @@
           {
             id: 3,
             naam: "Lespraktijk en didactiek",
-            kleur: "#F59E0B",
+            kleur: "#FBC02D",
             vragen: [
               { id: 25, tekst: "Ik geef regelmatig lessen of activiteiten waarin digitale geletterdheid zichtbaar aan bod komt.", type: "ik" },
               { id: 26, tekst: "Ik kan digitale geletterdheid koppelen aan vakken, thema's of projecten die ik al geef.", type: "ik" },
@@ -89,7 +117,7 @@
           {
             id: 4,
             naam: "Inhoudelijke dekking",
-            kleur: "#EF4444",
+            kleur: "#1E88E5",
             vragen: [
               { id: 35, tekst: "Ik weet dat digitale geletterdheid uit meerdere onderdelen bestaat.", type: "ik" },
               { id: 36, tekst: "Ik zie het verschil tussen alleen digitale vaardigheden oefenen en echt begrip opbouwen.", type: "ik" },
@@ -106,7 +134,7 @@
           {
             id: 5,
             naam: "Randvoorwaarden en ondersteuning",
-            kleur: "#8B5CF6",
+            kleur: "#26A69A",
             vragen: [
               { id: 45, tekst: "Ik heb genoeg tijd om digitale geletterdheid voor te bereiden of in mijn onderwijs op te nemen.", type: "ik" },
               { id: 46, tekst: "Ik weet welke lessen, materialen of bronnen ik kan gebruiken voor digitale geletterdheid.", type: "ik" },
@@ -121,7 +149,7 @@
           {
             id: 6,
             naam: "Ontwikkeling, evaluatie en borging",
-            kleur: "#06B6D4",
+            kleur: "#FBC02D",
             vragen: [
               { id: 53, tekst: "Ik weet welke ontwikkeling ik bij leerlingen wil zien op het gebied van digitale geletterdheid.", type: "ik" },
               { id: 54, tekst: "Ik kan zien waar mijn leerlingen al sterk in zijn en waar zij nog moeten groeien.", type: "ik" },
@@ -136,11 +164,13 @@
         ];
 
         // Scorebanden
+        // Score wordt intern berekend op 1-5 schaal, getoond als 1-10
         const getScoreband = (score) => {
-          if (score <= 1.80) return { niveau: "Nog niet", kleur: "#DC2626", achtergrond: "#FEE2E2" };
-          if (score <= 2.60) return { niveau: "Ad hoc", kleur: "#F97316", achtergrond: "#FFEDD5" };
-          if (score <= 3.40) return { niveau: "In ontwikkeling", kleur: "#EAB308", achtergrond: "#FEF9C3" };
-          if (score <= 4.20) return { niveau: "Meestal zichtbaar", kleur: "#22C55E", achtergrond: "#DCFCE7" };
+          // Score is al op 1-10 schaal
+          if (score <= 3.6) return { niveau: "Nog niet", kleur: "#DC2626", achtergrond: "#FEE2E2" };
+          if (score <= 5.2) return { niveau: "Ad hoc", kleur: "#F97316", achtergrond: "#FFEDD5" };
+          if (score <= 6.8) return { niveau: "In ontwikkeling", kleur: "#EAB308", achtergrond: "#FEF9C3" };
+          if (score <= 8.4) return { niveau: "Meestal zichtbaar", kleur: "#22C55E", achtergrond: "#DCFCE7" };
           return { niveau: "Stevig ingebed", kleur: "#16A34A", achtergrond: "#BBF7D0" };
         };
 
@@ -236,15 +266,16 @@
           }
         };
 
-        // Radardiagram component
-        const RadarChart = ({ scores, labels, ikScores, schoolScores, showComparison }) => {
-          const size = 300;
-          const center = size / 2;
-          const radius = 120;
+        // Radardiagram component - verbeterd voor betere leesbaarheid
+        const RadarChart = ({ scores, labels, title, color = "#1E88E5", fillColor = "rgba(30, 136, 229, 0.3)" }) => {
+          const viewBoxSize = 300;
+          const center = viewBoxSize / 2;
+          const radius = 90;
+          const labelRadius = 120;
 
-          const getCoordinates = (index, value, total) => {
+          const getCoordinates = (index, value, total, customRadius = radius) => {
             const angle = (Math.PI * 2 * index) / total - Math.PI / 2;
-            const r = (value / 5) * radius;
+            const r = (value / 10) * customRadius; // Nu op schaal 1-10
             return {
               x: center + r * Math.cos(angle),
               y: center + r * Math.sin(angle)
@@ -258,94 +289,127 @@
             }).join(' ') + ' Z';
           };
 
+          // Korte labels voor in de chart
+          const shortLabels = [
+            "Visie",
+            "Bekwaam", 
+            "Lespraktijk",
+            "Inhoud",
+            "Randvw.",
+            "Borging"
+          ];
+
           return (
-            <svg width={size} height={size} style={{ maxWidth: '100%', height: 'auto' }}>
-              {[1, 2, 3, 4, 5].map(level => (
-                <polygon
-                  key={level}
-                  points={scores.map((_, i) => {
-                    const coord = getCoordinates(i, level, scores.length);
-                    return `${coord.x},${coord.y}`;
-                  }).join(' ')}
-                  fill="none"
-                  stroke="#E5E7EB"
-                  strokeWidth="1"
-                />
-              ))}
-
-              {scores.map((_, i) => {
-                const coord = getCoordinates(i, 5, scores.length);
-                return (
-                  <line
-                    key={i}
-                    x1={center}
-                    y1={center}
-                    x2={coord.x}
-                    y2={coord.y}
-                    stroke="#E5E7EB"
-                    strokeWidth="1"
-                  />
-                );
-              })}
-
-              {showComparison && ikScores && (
-                <path
-                  d={createPath(ikScores)}
-                  fill="rgba(59, 130, 246, 0.2)"
-                  stroke="#3B82F6"
-                  strokeWidth="2"
-                />
+            <div style={{ textAlign: 'center' }}>
+              {title && (
+                <h3 style={{ 
+                  fontSize: '1rem', 
+                  fontWeight: '600', 
+                  color: '#374151', 
+                  marginBottom: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}>
+                  <div style={{ width: '16px', height: '4px', background: color, borderRadius: '2px' }} />
+                  {title}
+                </h3>
               )}
+              <svg 
+                viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
+                style={{ width: '100%', maxWidth: '320px', height: 'auto' }}
+              >
+                {/* Grid lijnen met nummers - schaal 1-10 */}
+                {[2, 4, 6, 8, 10].map(level => (
+                  <g key={level}>
+                    <polygon
+                      points={scores.map((_, i) => {
+                        const coord = getCoordinates(i, level, scores.length);
+                        return `${coord.x},${coord.y}`;
+                      }).join(' ')}
+                      fill="none"
+                      stroke="#E5E7EB"
+                      strokeWidth="1"
+                    />
+                    {/* Nummers op de eerste as (boven) */}
+                    <text
+                      x={center}
+                      y={center - (level / 10) * radius - 3}
+                      textAnchor="middle"
+                      style={{ fontSize: '8px', fill: '#9CA3AF', fontWeight: '500' }}
+                    >
+                      {level}
+                    </text>
+                  </g>
+                ))}
 
-              {showComparison && schoolScores && (
-                <path
-                  d={createPath(schoolScores)}
-                  fill="rgba(249, 115, 22, 0.2)"
-                  stroke="#F97316"
-                  strokeWidth="2"
-                />
-              )}
+                {/* Assen */}
+                {scores.map((_, i) => {
+                  const coord = getCoordinates(i, 5, scores.length);
+                  return (
+                    <line
+                      key={i}
+                      x1={center}
+                      y1={center}
+                      x2={coord.x}
+                      y2={coord.y}
+                      stroke="#E5E7EB"
+                      strokeWidth="1"
+                    />
+                  );
+                })}
 
-              {!showComparison && (
+                {/* Score area */}
                 <path
                   d={createPath(scores)}
-                  fill="rgba(139, 92, 246, 0.3)"
-                  stroke="#8B5CF6"
-                  strokeWidth="3"
+                  fill={fillColor}
+                  stroke={color}
+                  strokeWidth="2"
                 />
-              )}
 
-              {!showComparison && scores.map((score, i) => {
-                const coord = getCoordinates(i, score, scores.length);
-                return (
-                  <circle
-                    key={i}
-                    cx={coord.x}
-                    cy={coord.y}
-                    r="6"
-                    fill="#8B5CF6"
-                    stroke="white"
-                    strokeWidth="2"
-                  />
-                );
-              })}
+                {/* Score punten */}
+                {scores.map((score, i) => {
+                  const coord = getCoordinates(i, score, scores.length);
+                  return (
+                    <circle
+                      key={i}
+                      cx={coord.x}
+                      cy={coord.y}
+                      r="4"
+                      fill={color}
+                      stroke="white"
+                      strokeWidth="1.5"
+                    />
+                  );
+                })}
 
-              {labels.map((label, i) => {
-                const coord = getCoordinates(i, 5.8, scores.length);
-                return (
-                  <text
-                    key={i}
-                    x={coord.x}
-                    y={coord.y}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    style={{ fontSize: '10px', fill: '#374151', fontWeight: '500' }}
-                  >
-                    {label.split(' ').slice(0, 2).join(' ')}
-                  </text>
-                );
-              })}
-            </svg>
+                {/* Labels met themanummers */}
+                {shortLabels.map((label, i) => {
+                  const angle = (Math.PI * 2 * i) / shortLabels.length - Math.PI / 2;
+                  const x = center + labelRadius * Math.cos(angle);
+                  const y = center + labelRadius * Math.sin(angle);
+                  
+                  // Bepaal text-anchor gebaseerd op positie
+                  let textAnchor = 'middle';
+                  if (x < center - 10) textAnchor = 'end';
+                  else if (x > center + 10) textAnchor = 'start';
+                  
+                  return (
+                    <text
+                      key={i}
+                      x={x}
+                      y={y}
+                      textAnchor={textAnchor}
+                      dominantBaseline="middle"
+                      style={{ fontSize: '9px', fill: '#374151', fontWeight: '600' }}
+                    >
+                      {i + 1}. {label}
+                    </text>
+                  );
+                })}
+              </svg>
+            </div>
           );
         };
 
@@ -355,6 +419,8 @@
           const [huidigThema, setHuidigThema] = useState(0);
           const [antwoorden, setAntwoorden] = useState({});
           const [toonVergelijking, setToonVergelijking] = useState(false);
+          const [akkoord, setAkkoord] = useState(false);
+          const [bouw, setBouw] = useState('');
 
           const voortgangPerThema = useMemo(() => {
             return themas.map(thema => {
@@ -363,13 +429,14 @@
             });
           }, [antwoorden]);
 
+          // Scores worden berekend als gemiddelde van antwoorden (1-5) en vermenigvuldigd met 2 voor 1-10 schaal
           const scoresPerThema = useMemo(() => {
             return themas.map(thema => {
               const scores = thema.vragen
                 .filter(v => antwoorden[v.id] !== undefined)
                 .map(v => antwoorden[v.id]);
               if (scores.length === 0) return 0;
-              return scores.reduce((a, b) => a + b, 0) / scores.length;
+              return (scores.reduce((a, b) => a + b, 0) / scores.length) * 2; // *2 voor 1-10 schaal
             });
           }, [antwoorden]);
 
@@ -380,7 +447,7 @@
                 .filter(v => antwoorden[v.id] !== undefined)
                 .map(v => antwoorden[v.id]);
               if (scores.length === 0) return 0;
-              return scores.reduce((a, b) => a + b, 0) / scores.length;
+              return (scores.reduce((a, b) => a + b, 0) / scores.length) * 2; // *2 voor 1-10 schaal
             });
           }, [antwoorden]);
 
@@ -391,7 +458,7 @@
                 .filter(v => antwoorden[v.id] !== undefined)
                 .map(v => antwoorden[v.id]);
               if (scores.length === 0) return 0;
-              return scores.reduce((a, b) => a + b, 0) / scores.length;
+              return (scores.reduce((a, b) => a + b, 0) / scores.length) * 2; // *2 voor 1-10 schaal
             });
           }, [antwoorden]);
 
@@ -401,22 +468,23 @@
             const minScore = Math.min(...scoresPerThema.filter(s => s > 0));
             const laagsteThemaIndex = scoresPerThema.findIndex(s => s === minScore);
             
-            if (laagsteThemaIndex === 0 || scoresPerThema[0] < 2.6) {
+            // Thresholds aangepast naar 1-10 schaal (origineel *2)
+            if (laagsteThemaIndex === 0 || scoresPerThema[0] < 5.2) {
               return routes[0];
             }
-            if (scoresPerThema[1] < 2.8 && scoresPerThema[0] >= 2.6) {
+            if (scoresPerThema[1] < 5.6 && scoresPerThema[0] >= 5.2) {
               return routes[1];
             }
-            if (scoresPerThema[2] < 3.0 && scoresPerThema[0] >= 2.6 && scoresPerThema[1] >= 2.6) {
+            if (scoresPerThema[2] < 6.0 && scoresPerThema[0] >= 5.2 && scoresPerThema[1] >= 5.2) {
               return routes[2];
             }
-            if (scoresPerThema[3] < 3.0 && scoresPerThema[0] >= 2.6 && scoresPerThema[1] >= 2.6 && scoresPerThema[2] >= 2.6) {
+            if (scoresPerThema[3] < 6.0 && scoresPerThema[0] >= 5.2 && scoresPerThema[1] >= 5.2 && scoresPerThema[2] >= 5.2) {
               return routes[3];
             }
-            if (scoresPerThema[4] < 3.0 && Math.max(scoresPerThema[0], scoresPerThema[1]) >= 3.0) {
+            if (scoresPerThema[4] < 6.0 && Math.max(scoresPerThema[0], scoresPerThema[1]) >= 6.0) {
               return routes[4];
             }
-            if (Math.min(scoresPerThema[0], scoresPerThema[1], scoresPerThema[2], scoresPerThema[3]) >= 3.4 && scoresPerThema[5] < 3.2) {
+            if (Math.min(scoresPerThema[0], scoresPerThema[1], scoresPerThema[2], scoresPerThema[3]) >= 6.8 && scoresPerThema[5] < 6.4) {
               return routes[5];
             }
             
@@ -437,7 +505,7 @@
             return (
               <div style={{ 
                 minHeight: '100vh', 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: 'linear-gradient(135deg, #1E88E5 0%, #26A69A 100%)',
                 padding: '20px',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
               }}>
@@ -446,14 +514,14 @@
                   margin: '0 auto', 
                   background: 'white', 
                   borderRadius: '24px', 
-                  padding: '40px',
+                  padding: '24px',
                   boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
                 }}>
                   <h1 style={{ 
-                    fontSize: '2rem', 
+                    fontSize: '1.8rem', 
                     fontWeight: '700', 
-                    color: '#1F2937', 
-                    marginBottom: '16px',
+                    color: '#1E88E5', 
+                    marginBottom: '12px',
                     textAlign: 'center'
                   }}>
                     Nulmeting Digitale Geletterdheid
@@ -461,8 +529,8 @@
                   <p style={{ 
                     color: '#6B7280', 
                     textAlign: 'center', 
-                    marginBottom: '32px',
-                    fontSize: '1.1rem'
+                    marginBottom: '24px',
+                    fontSize: '1rem'
                   }}>
                     Voor leerkrachten in het basisonderwijs
                   </p>
@@ -470,72 +538,117 @@
                   <div style={{ 
                     background: '#F9FAFB', 
                     borderRadius: '16px', 
-                    padding: '24px', 
-                    marginBottom: '32px' 
+                    padding: '20px', 
+                    marginBottom: '24px' 
                   }}>
-                    <h2 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#374151', marginBottom: '16px' }}>
+                    <h2 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>
                       Wat kun je verwachten?
                     </h2>
-                    <ul style={{ color: '#4B5563', lineHeight: '1.8', paddingLeft: '20px' }}>
+                    <ul style={{ color: '#4B5563', lineHeight: '1.8', paddingLeft: '20px', margin: 0 }}>
                       <li><strong>60 stellingen</strong> verdeeld over 6 thema's</li>
                       <li>Score per stelling van <strong>1 (helemaal niet) tot 5 (helemaal wel)</strong></li>
                       <li>Direct inzicht in je <strong>sterke punten en groeikansen</strong></li>
                       <li>Vergelijking tussen <strong>individueel (ik)</strong> en <strong>teamperspectief (school)</strong></li>
-                      <li>Persoonlijk <strong>route-advies</strong> voor verdere ontwikkeling</li>
                     </ul>
                   </div>
 
+                  {/* Bouw selectie */}
                   <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
-                    gap: '12px', 
-                    marginBottom: '32px' 
+                    background: '#F0F9FF', 
+                    borderRadius: '12px', 
+                    padding: '16px', 
+                    marginBottom: '16px',
+                    border: '2px solid #1E88E5'
                   }}>
-                    {themas.map(thema => (
-                      <div 
-                        key={thema.id} 
+                    <label style={{ 
+                      display: 'block',
+                      fontWeight: '600', 
+                      color: '#1E88E5', 
+                      marginBottom: '12px',
+                      fontSize: '0.95rem'
+                    }}>
+                      In welke bouw werk je? *
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {['Onderbouw', 'Middenbouw', 'Bovenbouw', 'Anders'].map(optie => (
+                        <button
+                          key={optie}
+                          onClick={() => setBouw(optie)}
+                          style={{
+                            flex: '1',
+                            minWidth: '90px',
+                            padding: '12px 16px',
+                            borderRadius: '8px',
+                            border: bouw === optie ? '2px solid #1E88E5' : '2px solid #E5E7EB',
+                            background: bouw === optie ? '#1E88E5' : 'white',
+                            color: bouw === optie ? 'white' : '#374151',
+                            fontWeight: '600',
+                            fontSize: '0.9rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {optie}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Akkoord dataverwerking */}
+                  <div style={{ 
+                    background: '#F0FDF4', 
+                    borderRadius: '12px', 
+                    padding: '16px', 
+                    marginBottom: '24px',
+                    border: '2px solid #26A69A'
+                  }}>
+                    <label style={{ 
+                      display: 'flex', 
+                      alignItems: 'flex-start', 
+                      gap: '12px',
+                      cursor: 'pointer'
+                    }}>
+                      <input 
+                        type="checkbox" 
+                        checked={akkoord}
+                        onChange={(e) => setAkkoord(e.target.checked)}
                         style={{ 
-                          padding: '16px', 
-                          borderRadius: '12px', 
-                          background: thema.kleur + '15',
-                          borderLeft: `4px solid ${thema.kleur}`
+                          width: '22px', 
+                          height: '22px', 
+                          marginTop: '2px',
+                          accentColor: '#26A69A',
+                          cursor: 'pointer'
                         }}
-                      >
-                        <div style={{ fontSize: '0.85rem', fontWeight: '600', color: thema.kleur }}>
-                          Thema {thema.id}
-                        </div>
-                        <div style={{ fontSize: '0.9rem', color: '#374151', marginTop: '4px' }}>
-                          {thema.naam}
-                        </div>
-                      </div>
-                    ))}
+                      />
+                      <span style={{ color: '#374151', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                        <strong style={{ color: '#26A69A' }}>Akkoord met dataverwerking *</strong><br/>
+                        Ik ga akkoord dat mijn antwoorden worden opgeslagen en gebruikt voor het genereren van persoonlijke inzichten en schoolbrede analyses.
+                      </span>
+                    </label>
                   </div>
 
                   <button
                     onClick={() => setPagina('invullen')}
+                    disabled={!akkoord || !bouw}
                     style={{
                       width: '100%',
                       padding: '16px 32px',
                       fontSize: '1.1rem',
                       fontWeight: '600',
                       color: 'white',
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: (!akkoord || !bouw) ? '#CBD5E1' : 'linear-gradient(135deg, #1E88E5 0%, #26A69A 100%)',
                       border: 'none',
                       borderRadius: '12px',
-                      cursor: 'pointer'
+                      cursor: (!akkoord || !bouw) ? 'not-allowed' : 'pointer',
+                      opacity: (!akkoord || !bouw) ? 0.7 : 1
                     }}
                   >
                     Start de nulmeting
                   </button>
-
-                  <p style={{ 
-                    textAlign: 'center', 
-                    color: '#9CA3AF', 
-                    fontSize: '0.85rem', 
-                    marginTop: '16px' 
-                  }}>
-                    Geschatte tijd: 10-15 minuten
-                  </p>
+                  {(!akkoord || !bouw) && (
+                    <p style={{ textAlign: 'center', color: '#EF4444', fontSize: '0.85rem', marginTop: '12px' }}>
+                      Selecteer je bouw en ga akkoord met de dataverwerking om te starten
+                    </p>
+                  )}
                 </div>
               </div>
             );
@@ -676,17 +789,17 @@
 
                       <div style={{ 
                         display: 'flex', 
-                        gap: '8px',
-                        flexWrap: 'wrap'
+                        gap: '6px',
+                        flexWrap: 'nowrap'
                       }}>
                         {[1, 2, 3, 4, 5].map(score => (
                           <button
                             key={score}
                             onClick={() => handleAntwoord(vraag.id, score)}
                             style={{
-                              flex: '1 1 60px',
-                              minWidth: '60px',
-                              padding: '12px 8px',
+                              flex: '1',
+                              minWidth: '40px',
+                              padding: '12px 4px',
                               borderRadius: '8px',
                               border: antwoorden[vraag.id] === score 
                                 ? `2px solid ${thema.kleur}` 
@@ -727,7 +840,7 @@
                   }}>
                     {huidigThema > 0 && (
                       <button
-                        onClick={() => setHuidigThema(huidigThema - 1)}
+                        onClick={() => { setHuidigThema(huidigThema - 1); window.scrollTo(0, 0); }}
                         style={{
                           flex: 1,
                           minWidth: '120px',
@@ -746,7 +859,7 @@
                     
                     {huidigThema < themas.length - 1 ? (
                       <button
-                        onClick={() => setHuidigThema(huidigThema + 1)}
+                        onClick={() => { setHuidigThema(huidigThema + 1); window.scrollTo(0, 0); }}
                         style={{
                           flex: 1,
                           minWidth: '120px',
@@ -763,7 +876,7 @@
                       </button>
                     ) : (
                       <button
-                        onClick={() => setPagina('resultaten')}
+                        onClick={() => { setPagina('resultaten'); window.scrollTo(0, 0); }}
                         disabled={!alleVragenBeantwoord}
                         style={{
                           flex: 1,
@@ -772,7 +885,7 @@
                           borderRadius: '10px',
                           border: 'none',
                           background: alleVragenBeantwoord 
-                            ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                            ? 'linear-gradient(135deg, #1E88E5 0%, #26A69A 100%)'
                             : '#D1D5DB',
                           color: 'white',
                           fontWeight: '600',
@@ -809,390 +922,166 @@
                 paddingBottom: '40px'
               }}>
                 <div style={{ 
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  padding: '40px 20px',
+                  background: 'linear-gradient(135deg, #1E88E5 0%, #26A69A 100%)',
+                  padding: '32px 20px',
                   color: 'white',
                   textAlign: 'center'
                 }}>
-                  <h1 style={{ fontSize: '1.8rem', fontWeight: '700', margin: 0 }}>
+                  <h1 style={{ fontSize: '1.6rem', fontWeight: '700', margin: 0 }}>
                     Jouw Resultaten
                   </h1>
-                  <p style={{ opacity: 0.9, marginTop: '8px' }}>
-                    Nulmeting Digitale Geletterdheid
+                  <p style={{ opacity: 0.9, marginTop: '8px', fontSize: '0.9rem' }}>
+                    Nulmeting Digitale Geletterdheid - {bouw}
                   </p>
                 </div>
 
-                <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px 20px' }}>
+                <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '16px 12px' }}>
+                  {/* Container met radarplots en scorebanden */}
                   <div style={{ 
-                    background: 'white', 
-                    borderRadius: '20px', 
-                    padding: '24px',
-                    marginBottom: '24px',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.07)'
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                    gap: '16px',
+                    marginBottom: '24px'
                   }}>
-                    <h2 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#1F2937', marginBottom: '16px' }}>
-                      Overzicht per thema
-                    </h2>
-                    
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'center', 
-                      gap: '12px', 
-                      marginBottom: '20px',
-                      flexWrap: 'wrap'
-                    }}>
-                      <button
-                        onClick={() => setToonVergelijking(false)}
-                        style={{
-                          padding: '8px 16px',
-                          borderRadius: '8px',
-                          border: !toonVergelijking ? '2px solid #8B5CF6' : '2px solid #E5E7EB',
-                          background: !toonVergelijking ? '#8B5CF6' : 'white',
-                          color: !toonVergelijking ? 'white' : '#6B7280',
-                          fontWeight: '500',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Totaalscore
-                      </button>
-                      <button
-                        onClick={() => setToonVergelijking(true)}
-                        style={{
-                          padding: '8px 16px',
-                          borderRadius: '8px',
-                          border: toonVergelijking ? '2px solid #8B5CF6' : '2px solid #E5E7EB',
-                          background: toonVergelijking ? '#8B5CF6' : 'white',
-                          color: toonVergelijking ? 'white' : '#6B7280',
-                          fontWeight: '500',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Ik vs. School
-                      </button>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                      <RadarChart 
-                        scores={scoresPerThema}
-                        labels={themas.map(t => t.naam)}
-                        ikScores={ikScoresPerThema}
-                        schoolScores={schoolScoresPerThema}
-                        showComparison={toonVergelijking}
-                      />
-                    </div>
-
-                    {toonVergelijking && (
-                      <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        gap: '24px', 
-                        marginTop: '16px' 
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '16px', height: '4px', background: '#3B82F6', borderRadius: '2px' }} />
-                          <span style={{ fontSize: '0.85rem', color: '#374151' }}>Ik (individueel)</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '16px', height: '4px', background: '#F97316', borderRadius: '2px' }} />
-                          <span style={{ fontSize: '0.85rem', color: '#374151' }}>School (team)</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div style={{ 
-                    background: 'white', 
-                    borderRadius: '20px', 
-                    padding: '24px',
-                    marginBottom: '24px',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.07)'
-                  }}>
-                    <h2 style={{ fontSize: '1.2rem', fontWeight: '600', color: '#1F2937', marginBottom: '20px' }}>
-                      Scores per thema
-                    </h2>
-
-                    {themas.map((thema, index) => {
-                      const score = scoresPerThema[index];
-                      const band = getScoreband(score);
-                      const ikScore = ikScoresPerThema[index];
-                      const schoolScore = schoolScoresPerThema[index];
-                      const verschil = ikScore - schoolScore;
-                      
-                      return (
-                        <div 
-                          key={thema.id}
-                          style={{
-                            padding: '20px',
-                            borderRadius: '12px',
-                            background: '#F9FAFB',
-                            marginBottom: '12px',
-                            borderLeft: `4px solid ${thema.kleur}`
-                          }}
-                        >
-                          <div style={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'flex-start',
-                            flexWrap: 'wrap',
-                            gap: '12px'
-                          }}>
-                            <div>
-                              <h3 style={{ 
-                                fontSize: '1rem', 
-                                fontWeight: '600', 
-                                color: '#1F2937',
-                                margin: 0
-                              }}>
-                                {thema.id}. {thema.naam}
-                              </h3>
-                              <p style={{ 
-                                fontSize: '0.85rem', 
-                                color: '#6B7280', 
-                                margin: '8px 0 0 0',
-                                maxWidth: '500px'
-                              }}>
-                                {groeikader[thema.id][band.niveau]}
-                              </p>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                              <div style={{ 
-                                fontSize: '1.5rem', 
-                                fontWeight: '700', 
-                                color: band.kleur 
-                              }}>
-                                {score.toFixed(2)}
-                              </div>
-                              <div style={{
-                                display: 'inline-block',
-                                padding: '4px 12px',
-                                borderRadius: '6px',
-                                background: band.achtergrond,
-                                color: band.kleur,
-                                fontSize: '0.8rem',
-                                fontWeight: '600'
-                              }}>
-                                {band.niveau}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div style={{ 
-                            marginTop: '16px',
-                            paddingTop: '16px',
-                            borderTop: '1px solid #E5E7EB'
-                          }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              gap: '24px',
-                              flexWrap: 'wrap',
-                              marginBottom: '8px'
-                            }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ 
-                                  padding: '2px 8px', 
-                                  background: '#DBEAFE', 
-                                  color: '#1D4ED8',
-                                  borderRadius: '4px',
-                                  fontSize: '0.75rem',
-                                  fontWeight: '500'
-                                }}>IK</span>
-                                <span style={{ fontWeight: '600', color: '#3B82F6' }}>
-                                  {ikScore.toFixed(2)}
-                                </span>
-                              </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ 
-                                  padding: '2px 8px', 
-                                  background: '#FFEDD5', 
-                                  color: '#C2410C',
-                                  borderRadius: '4px',
-                                  fontSize: '0.75rem',
-                                  fontWeight: '500'
-                                }}>SCHOOL</span>
-                                <span style={{ fontWeight: '600', color: '#F97316' }}>
-                                  {schoolScore.toFixed(2)}
-                                </span>
-                              </div>
-                              <div style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '4px',
-                                color: Math.abs(verschil) < 0.3 ? '#6B7280' : verschil > 0 ? '#3B82F6' : '#F97316'
-                              }}>
-                                <span style={{ fontSize: '0.85rem' }}>Verschil:</span>
-                                <span style={{ fontWeight: '600' }}>
-                                  {verschil > 0 ? '+' : ''}{verschil.toFixed(2)}
-                                </span>
-                              </div>
-                            </div>
-
-                            {Math.abs(verschil) >= 0.5 && (
-                              <div style={{
-                                padding: '10px 14px',
-                                borderRadius: '8px',
-                                background: verschil > 0 ? '#DBEAFE' : '#FFEDD5',
-                                fontSize: '0.85rem',
-                                color: verschil > 0 ? '#1E40AF' : '#9A3412'
-                              }}>
-                                {verschil > 0 
-                                  ? "→ Je individuele motivatie en bekwaamheid zijn sterker dan de schoolstructuur. De school kan beter ondersteunen."
-                                  : "→ De school denkt dat het goed staat, maar je voelt je als leerkracht nog niet volledig toegerust."
-                                }
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {passendeRoute && (
+                    {/* Individueel radar */}
                     <div style={{ 
                       background: 'white', 
-                      borderRadius: '20px', 
-                      padding: '24px',
-                      marginBottom: '24px',
-                      boxShadow: '0 4px 6px rgba(0,0,0,0.07)',
-                      border: '2px solid #8B5CF6'
+                      borderRadius: '16px', 
+                      padding: '20px',
+                      boxShadow: '0 4px 6px rgba(0,0,0,0.07)'
                     }}>
-                      <div style={{
-                        display: 'inline-block',
-                        padding: '6px 14px',
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        color: 'white',
-                        borderRadius: '20px',
-                        fontSize: '0.85rem',
-                        fontWeight: '600',
-                        marginBottom: '16px'
+                      <RadarChart 
+                        scores={ikScoresPerThema}
+                        labels={themas.map(t => t.naam)}
+                        title="Individueel (IK)"
+                        color="#1E88E5"
+                        fillColor="rgba(30, 136, 229, 0.25)"
+                      />
+                      {/* Scores overzicht */}
+                      <div style={{ 
+                        marginTop: '16px', 
+                        padding: '12px', 
+                        background: '#E3F2FD', 
+                        borderRadius: '10px',
+                        borderLeft: '4px solid #1E88E5'
                       }}>
-                        Aanbevolen Route
-                      </div>
-                      
-                      <h2 style={{ 
-                        fontSize: '1.4rem', 
-                        fontWeight: '700', 
-                        color: '#1F2937',
-                        margin: '0 0 12px 0'
-                      }}>
-                        Route {passendeRoute.id}: {passendeRoute.naam}
-                      </h2>
-                      
-                      <p style={{ 
-                        color: '#4B5563', 
-                        lineHeight: '1.7',
-                        marginBottom: '20px'
-                      }}>
-                        {passendeRoute.beschrijving}
-                      </p>
-
-                      <div style={{
-                        background: '#F3F4F6',
-                        borderRadius: '12px',
-                        padding: '20px',
-                        marginBottom: '20px'
-                      }}>
-                        <h3 style={{ 
-                          fontSize: '1rem', 
-                          fontWeight: '600', 
-                          color: '#374151',
-                          marginBottom: '12px'
+                        <div style={{ 
+                          display: 'grid', 
+                          gridTemplateColumns: '1fr auto',
+                          gap: '6px 12px',
+                          fontSize: '0.85rem',
+                          alignItems: 'start'
                         }}>
-                          Wat zegt de nulmeting?
-                        </h3>
-                        <p style={{ color: '#4B5563', lineHeight: '1.6', margin: 0 }}>
-                          {passendeRoute.conclusie}
-                        </p>
+                          {themas.map((thema, index) => {
+                            const score = ikScoresPerThema[index];
+                            const band = getScoreband(score);
+                            return (
+                              <React.Fragment key={thema.id}>
+                                <span style={{ color: '#374151', wordWrap: 'break-word', lineHeight: '1.3' }}>{index + 1}. {thema.naam}</span>
+                                <span style={{ fontWeight: '700', color: band.kleur, textAlign: 'right', whiteSpace: 'nowrap' }}>{score.toFixed(1)}</span>
+                              </React.Fragment>
+                            );
+                          })}
+                          <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #90CAF9', marginTop: '8px', paddingTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontWeight: '600', color: '#1565C0' }}>Gemiddelde</span>
+                            <span style={{ fontWeight: '700', color: '#1E88E5' }}>
+                              {(ikScoresPerThema.reduce((a,b) => a+b, 0) / ikScoresPerThema.length).toFixed(1)}
+                            </span>
+                          </div>
+                        </div>
                       </div>
+                    </div>
 
-                      <h3 style={{ 
-                        fontSize: '1rem', 
-                        fontWeight: '600', 
-                        color: '#374151',
-                        marginBottom: '12px'
+                    {/* School radar */}
+                    <div style={{ 
+                      background: 'white', 
+                      borderRadius: '16px', 
+                      padding: '20px',
+                      boxShadow: '0 4px 6px rgba(0,0,0,0.07)'
+                    }}>
+                      <RadarChart 
+                        scores={schoolScoresPerThema}
+                        labels={themas.map(t => t.naam)}
+                        title="School (hoe ik het ervaar)"
+                        color="#26A69A"
+                        fillColor="rgba(38, 166, 154, 0.25)"
+                      />
+                      {/* Scores overzicht */}
+                      <div style={{ 
+                        marginTop: '16px', 
+                        padding: '12px', 
+                        background: '#E0F2F1', 
+                        borderRadius: '10px',
+                        borderLeft: '4px solid #26A69A'
                       }}>
-                        Eerste interventies
+                        <div style={{ 
+                          display: 'grid', 
+                          gridTemplateColumns: '1fr auto',
+                          gap: '6px 12px',
+                          fontSize: '0.85rem',
+                          alignItems: 'start'
+                        }}>
+                          {themas.map((thema, index) => {
+                            const score = schoolScoresPerThema[index];
+                            const band = getScoreband(score);
+                            return (
+                              <React.Fragment key={thema.id}>
+                                <span style={{ color: '#374151', wordWrap: 'break-word', lineHeight: '1.3' }}>{index + 1}. {thema.naam}</span>
+                                <span style={{ fontWeight: '700', color: band.kleur, textAlign: 'right', whiteSpace: 'nowrap' }}>{score.toFixed(1)}</span>
+                              </React.Fragment>
+                            );
+                          })}
+                          <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #80CBC4', marginTop: '8px', paddingTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontWeight: '600', color: '#00796B' }}>Gemiddelde</span>
+                            <span style={{ fontWeight: '700', color: '#26A69A' }}>
+                              {(schoolScoresPerThema.reduce((a,b) => a+b, 0) / schoolScoresPerThema.length).toFixed(1)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Scorebanden aan de zijkant */}
+                    <div style={{ 
+                      background: 'white', 
+                      borderRadius: '16px', 
+                      padding: '20px',
+                      boxShadow: '0 4px 6px rgba(0,0,0,0.07)'
+                    }}>
+                      <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>
+                        Scorebanden
                       </h3>
-                      <ul style={{ 
-                        margin: 0, 
-                        paddingLeft: '0',
-                        listStyle: 'none'
-                      }}>
-                        {passendeRoute.interventies.map((interventie, i) => (
-                          <li 
-                            key={i}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {[
+                          { range: '1 – 3.6', niveau: 'Nog niet', kleur: '#DC2626', bg: '#FEE2E2' },
+                          { range: '3.6 – 5.2', niveau: 'Ad hoc', kleur: '#F97316', bg: '#FFEDD5' },
+                          { range: '5.2 – 6.8', niveau: 'In ontwikkeling', kleur: '#FBC02D', bg: '#FEF9C3' },
+                          { range: '6.8 – 8.4', niveau: 'Meestal zichtbaar', kleur: '#26A69A', bg: '#E0F2F1' },
+                          { range: '8.4 – 10', niveau: 'Stevig ingebed', kleur: '#1E88E5', bg: '#E3F2FD' }
+                        ].map(band => (
+                          <div 
+                            key={band.niveau}
                             style={{
                               display: 'flex',
-                              alignItems: 'flex-start',
-                              gap: '12px',
-                              padding: '10px 0',
-                              borderBottom: i < passendeRoute.interventies.length - 1 ? '1px solid #E5E7EB' : 'none'
+                              alignItems: 'center',
+                              gap: '10px',
+                              padding: '8px 12px',
+                              background: band.bg,
+                              borderRadius: '6px',
+                              fontSize: '0.85rem'
                             }}
                           >
-                            <span style={{
-                              width: '24px',
-                              height: '24px',
-                              borderRadius: '50%',
-                              background: '#8B5CF6',
-                              color: 'white',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '0.75rem',
-                              fontWeight: '600',
-                              flexShrink: 0
-                            }}>
-                              {i + 1}
+                            <span style={{ fontWeight: '600', color: band.kleur, minWidth: '70px' }}>
+                              {band.range}
                             </span>
-                            <span style={{ color: '#374151' }}>{interventie}</span>
-                          </li>
+                            <span style={{ color: '#374151', whiteSpace: 'nowrap' }}>{band.niveau}</span>
+                          </div>
                         ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  <div style={{ 
-                    background: 'white', 
-                    borderRadius: '20px', 
-                    padding: '24px',
-                    marginBottom: '24px',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.07)'
-                  }}>
-                    <h2 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#1F2937', marginBottom: '16px' }}>
-                      Scorebanden
-                    </h2>
-                    <div style={{ display: 'grid', gap: '8px' }}>
-                      {[
-                        { range: '1.00 – 1.80', niveau: 'Nog niet', kleur: '#DC2626', bg: '#FEE2E2' },
-                        { range: '1.81 – 2.60', niveau: 'Ad hoc', kleur: '#F97316', bg: '#FFEDD5' },
-                        { range: '2.61 – 3.40', niveau: 'In ontwikkeling', kleur: '#EAB308', bg: '#FEF9C3' },
-                        { range: '3.41 – 4.20', niveau: 'Meestal zichtbaar', kleur: '#22C55E', bg: '#DCFCE7' },
-                        { range: '4.21 – 5.00', niveau: 'Stevig ingebed', kleur: '#16A34A', bg: '#BBF7D0' }
-                      ].map(band => (
-                        <div 
-                          key={band.niveau}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            padding: '10px 14px',
-                            background: band.bg,
-                            borderRadius: '8px'
-                          }}
-                        >
-                          <span style={{ 
-                            fontWeight: '600', 
-                            color: band.kleur,
-                            minWidth: '100px'
-                          }}>
-                            {band.range}
-                          </span>
-                          <span style={{ color: '#374151' }}>{band.niveau}</span>
-                        </div>
-                      ))}
+                      </div>
                     </div>
                   </div>
 
-                  <div style={{ textAlign: 'center' }}>
+                  <div style={{ textAlign: 'center', marginTop: '24px' }}>
                     <button
                       onClick={() => {
                         setAntwoorden({});
