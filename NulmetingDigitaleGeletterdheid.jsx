@@ -349,6 +349,19 @@ export default function NulmetingDigitaleGeletterdheid() {
     });
   }, [antwoorden]);
 
+  // Bereken totale voortgang
+  const totaleVoortgang = useMemo(() => {
+    const totaalVragen = themas.reduce((acc, t) => acc + t.vragen.length, 0);
+    const beantwoordeVragen = Object.keys(antwoorden).length;
+    return (beantwoordeVragen / totaalVragen) * 100;
+  }, [antwoorden]);
+
+  // Check of huidig thema volledig is ingevuld
+  const huidigThemaVolledig = useMemo(() => {
+    const thema = themas[huidigThema];
+    return thema.vragen.every(v => antwoorden[v.id] !== undefined);
+  }, [antwoorden, huidigThema]);
+
   // Bereken scores per thema
   const scoresPerThema = useMemo(() => {
     return themas.map(thema => {
@@ -474,9 +487,9 @@ export default function NulmetingDigitaleGeletterdheid() {
             <ul style={{ color: '#4B5563', lineHeight: '1.8', paddingLeft: '20px' }}>
               <li><strong>60 stellingen</strong> verdeeld over 6 thema's</li>
               <li>Score per stelling van <strong>1 (helemaal niet) tot 5 (helemaal wel)</strong></li>
-              <li>Direct inzicht in je <strong>sterke punten en groeikansen</strong></li>
+              <li>Direct inzicht in <strong>sterke punten en groeikansen</strong> van de school</li>
               <li>Vergelijking tussen <strong>individueel (ik)</strong> en <strong>teamperspectief (school)</strong></li>
-              <li>Persoonlijk <strong>route-advies</strong> voor verdere ontwikkeling</li>
+              <li>Schoolbreed <strong>route-advies</strong> voor verdere ontwikkeling</li>
             </ul>
           </div>
 
@@ -598,7 +611,7 @@ export default function NulmetingDigitaleGeletterdheid() {
               ))}
             </div>
 
-            {/* Voortgangsbalk */}
+            {/* Voortgangsbalk (totaal) */}
             <div style={{ marginTop: '12px' }}>
               <div style={{ 
                 display: 'flex', 
@@ -607,8 +620,8 @@ export default function NulmetingDigitaleGeletterdheid() {
                 color: '#6B7280',
                 marginBottom: '4px'
               }}>
-                <span>Thema {thema.id}: {thema.naam}</span>
-                <span>{Math.round(voortgangPerThema[huidigThema])}% voltooid</span>
+                <span>Totale voortgang</span>
+                <span>{Math.round(totaleVoortgang)}% voltooid ({Object.keys(antwoorden).length}/60 vragen)</span>
               </div>
               <div style={{ 
                 height: '8px', 
@@ -618,8 +631,8 @@ export default function NulmetingDigitaleGeletterdheid() {
               }}>
                 <div style={{ 
                   height: '100%', 
-                  width: `${voortgangPerThema[huidigThema]}%`,
-                  background: thema.kleur,
+                  width: `${totaleVoortgang}%`,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   borderRadius: '4px',
                   transition: 'width 0.3s ease'
                 }} />
@@ -758,16 +771,17 @@ export default function NulmetingDigitaleGeletterdheid() {
             {huidigThema < themas.length - 1 ? (
               <button
                 onClick={() => setHuidigThema(huidigThema + 1)}
+                disabled={!huidigThemaVolledig}
                 style={{
                   flex: 1,
                   minWidth: '120px',
                   padding: '14px 24px',
                   borderRadius: '10px',
                   border: 'none',
-                  background: thema.kleur,
+                  background: huidigThemaVolledig ? thema.kleur : '#D1D5DB',
                   color: 'white',
                   fontWeight: '600',
-                  cursor: 'pointer'
+                  cursor: huidigThemaVolledig ? 'pointer' : 'not-allowed'
                 }}
               >
                 Volgende thema →
@@ -795,14 +809,14 @@ export default function NulmetingDigitaleGeletterdheid() {
             )}
           </div>
 
-          {!alleVragenBeantwoord && huidigThema === themas.length - 1 && (
+          {!huidigThemaVolledig && (
             <p style={{ 
               textAlign: 'center', 
               color: '#EF4444', 
               fontSize: '0.9rem', 
               marginTop: '12px' 
             }}>
-              Beantwoord alle vragen om de resultaten te bekijken
+              Beantwoord alle vragen in dit thema om verder te gaan
             </p>
           )}
         </div>
