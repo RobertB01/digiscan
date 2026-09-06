@@ -1,0 +1,61 @@
+DIGISCAN: SUPABASE EN GITHUB PAGES
+
+De applicatie blijft volledig geschikt voor GitHub Pages. GitHub Pages host alleen
+de publieke frontend. Een Supabase Edge Function verwerkt de opslag veilig.
+
+STATUS 6 SEPTEMBER 2026
+
+- Supabase-project DigitaleGeletterdheid is gekoppeld.
+- Tabellen scans en responses zijn aangemaakt en RLS is ingeschakeld.
+- Edge Function submit-scan is gepubliceerd.
+- Opslag is getest via de API en via de volledige website.
+- De testgegevens zijn na controle verwijderd; de database is schoon.
+- Resultatenmail via Resend staat als TODO en is nog niet actief.
+
+1. SUPABASE AANMAKEN
+
+- Maak een project op https://supabase.com.
+- Open SQL Editor en voer de volledige inhoud van supabase/schema.sql uit.
+- Noteer bij Project Settings > API:
+  - Project URL
+  - anon/public key
+- Vul deze twee publieke waarden in config.js in.
+- Plaats NOOIT de service-role key in config.js of GitHub.
+
+2. EDGE FUNCTION PUBLICEREN
+
+Voer vanuit de projectmap uit:
+
+  npx supabase login
+  npx supabase link --project-ref JOUW_PROJECT_REF
+  npx supabase secrets set ALLOWED_ORIGIN=https://JOUW_GITHUB_NAAM.github.io
+  npx supabase functions deploy submit-scan
+
+SUPABASE_URL en SUPABASE_SERVICE_ROLE_KEY worden automatisch beschikbaar gesteld
+aan de Edge Functions. Zet die geheime waarden niet in de frontend.
+
+3. GITHUB PAGES
+
+- Commit en push de projectbestanden naar GitHub.
+- Open repository Settings > Pages.
+- Kies Deploy from a branch, de branch main en map /(root).
+- Open daarna de gepubliceerde URL en voer een volledige testscan uit.
+
+4. CONTROLE
+
+- Controleer in Supabase Table Editor of scans en responses worden gevuld.
+- Stel ALLOWED_ORIGIN exact in op de oorsprong van de website, zonder pad erachter.
+
+TODO: RESULTATENMAIL
+
+- Later Resend configureren met mail.meestersonline.nl.
+- Daarna de bestaande Edge Function send-results publiceren.
+- Pas daarna het e-mailveld weer zichtbaar maken op de resultatenpagina.
+
+PRIVACY
+
+- E-mailadressen worden alleen aan Resend doorgegeven voor directe verzending en
+  worden niet in de eigen database opgeslagen.
+- Leg in een privacyverklaring uit wat wordt opgeslagen, waarom, hoe lang en hoe
+  een deelnemer een verwijderverzoek kan indienen.
+- Spreek een bewaartermijn af en verwijder oudere scans periodiek.

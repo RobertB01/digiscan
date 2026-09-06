@@ -7,6 +7,7 @@
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="config.js"></script>
     <style>
         * {
             margin: 0;
@@ -421,6 +422,17 @@
           const [toonVergelijking, setToonVergelijking] = useState(false);
           const [akkoord, setAkkoord] = useState(false);
           const [bouw, setBouw] = useState('');
+          const [extraVraag, setExtraVraag] = useState('');
+          const [scanId, setScanId] = useState(null);
+          const [opslagStatus, setOpslagStatus] = useState('niet-opgeslagen');
+
+          const apiConfig = window.DIGISCAN_CONFIG || {};
+          const apiIsConfigured = Boolean(
+            apiConfig.supabaseUrl &&
+            apiConfig.supabaseAnonKey &&
+            !apiConfig.supabaseUrl.includes('VUL_HIER') &&
+            !apiConfig.supabaseAnonKey.includes('VUL_HIER')
+          );
 
           const voortgangPerThema = useMemo(() => {
             return themas.map(thema => {
@@ -429,14 +441,14 @@
             });
           }, [antwoorden]);
 
-          // Scores worden berekend als gemiddelde van antwoorden (1-5) en vermenigvuldigd met 2 voor 1-10 schaal
+          // Scores worden berekend als gemiddelde van antwoorden (1-5) en getoond op een 1-10 schaal
           const scoresPerThema = useMemo(() => {
             return themas.map(thema => {
               const scores = thema.vragen
                 .filter(v => antwoorden[v.id] !== undefined)
                 .map(v => antwoorden[v.id]);
               if (scores.length === 0) return 0;
-              return (scores.reduce((a, b) => a + b, 0) / scores.length) * 2; // *2 voor 1-10 schaal
+              return (scores.reduce((a, b) => a + b, 0) / scores.length) * 2;
             });
           }, [antwoorden]);
 
@@ -447,7 +459,7 @@
                 .filter(v => antwoorden[v.id] !== undefined)
                 .map(v => antwoorden[v.id]);
               if (scores.length === 0) return 0;
-              return (scores.reduce((a, b) => a + b, 0) / scores.length) * 2; // *2 voor 1-10 schaal
+              return (scores.reduce((a, b) => a + b, 0) / scores.length) * 2;
             });
           }, [antwoorden]);
 
@@ -458,7 +470,7 @@
                 .filter(v => antwoorden[v.id] !== undefined)
                 .map(v => antwoorden[v.id]);
               if (scores.length === 0) return 0;
-              return (scores.reduce((a, b) => a + b, 0) / scores.length) * 2; // *2 voor 1-10 schaal
+              return (scores.reduce((a, b) => a + b, 0) / scores.length) * 2;
             });
           }, [antwoorden]);
 
@@ -498,6 +510,59 @@
 
           const handleAntwoord = (vraagId, score) => {
             setAntwoorden(prev => ({ ...prev, [vraagId]: score }));
+          };
+
+          const callApi = async (functionName, body) => {
+            if (!apiIsConfigured) {
+              throw new Error('De opslag- en e-mailomgeving is nog niet geconfigureerd.');
+            }
+
+            const response = await fetch(`${apiConfig.supabaseUrl}/functions/v1/${functionName}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': apiConfig.supabaseAnonKey,
+                'Authorization': `Bearer ${apiConfig.supabaseAnonKey}`
+              },
+              body: JSON.stringify(body)
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              throw new Error(result.error || 'Er ging iets mis. Probeer het later opnieuw.');
+            }
+            return result;
+          };
+
+          const saveResults = async () => {
+            if (scanId) return scanId;
+
+            setOpslagStatus('bezig');
+            try {
+              const result = await callApi('submit-scan', {
+                questionnaireVersion: '1.0',
+                consentVersion: '1.0',
+                bouw,
+                extraAnswer: extraVraag,
+                answers: antwoorden
+              });
+              setScanId(result.scanId);
+              setOpslagStatus('opgeslagen');
+              return result.scanId;
+            } catch (error) {
+              setOpslagStatus('fout');
+              throw error;
+            }
+          };
+
+          const showResults = async () => {
+            setPagina('resultaten');
+            window.scrollTo(0, 0);
+            if (!apiIsConfigured) return;
+            try {
+              await saveResults();
+            } catch (error) {
+              console.error(error);
+            }
           };
 
           // Intro pagina
@@ -621,7 +686,7 @@
                       />
                       <span style={{ color: '#374151', fontSize: '0.9rem', lineHeight: '1.5' }}>
                         <strong style={{ color: '#26A69A' }}>Akkoord met dataverwerking *</strong><br/>
-                        Ik ga akkoord dat mijn antwoorden worden opgeslagen en gebruikt voor het genereren van inzichten en schoolbrede analyses.
+                        Ik ga akkoord dat mijn antwoorden anoniem worden opgeslagen en gebruikt voor het genereren van inzichten en schoolbrede analyses.
                       </span>
                     </label>
                   </div>
@@ -832,6 +897,40 @@
                     </div>
                   ))}
 
+                  {huidigThema === themas.length - 1 && (
+                    <div style={{
+                      background: 'white',
+                      borderRadius: '16px',
+                      padding: '24px',
+                      marginBottom: '16px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
+                    }}>
+                      <p style={{
+                        margin: 0,
+                        fontWeight: '600',
+                        color: '#1F2937',
+                        marginBottom: '12px'
+                      }}>
+                        Waar loop je tegenaan op het gebied van digitale geletterdheid?
+                      </p>
+                      <textarea
+                        value={extraVraag}
+                        onChange={(e) => setExtraVraag(e.target.value)}
+                        placeholder="Bijvoorbeeld: tijd, inhoud, tools of overleg in het team"
+                        style={{
+                          width: '100%',
+                          minHeight: '120px',
+                          borderRadius: '14px',
+                          border: '1px solid #D1D5DB',
+                          padding: '14px',
+                          fontSize: '0.95rem',
+                          color: '#111827',
+                          resize: 'vertical'
+                        }}
+                      />
+                    </div>
+                  )}
+
                   <div style={{ 
                     display: 'flex', 
                     gap: '12px', 
@@ -876,7 +975,7 @@
                       </button>
                     ) : (
                       <button
-                        onClick={() => { setPagina('resultaten'); window.scrollTo(0, 0); }}
+                        onClick={showResults}
                         disabled={!alleVragenBeantwoord}
                         style={{
                           flex: 1,
@@ -1081,11 +1180,48 @@
                     </div>
                   </div>
 
+                  {extraVraag && (
+                    <div style={{
+                      margin: '24px auto',
+                      maxWidth: '900px',
+                      background: 'white',
+                      borderRadius: '16px',
+                      padding: '20px',
+                      boxShadow: '0 4px 6px rgba(0,0,0,0.06)'
+                    }}>
+                      <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#111827', marginBottom: '12px' }}>
+                        Jouw opmerking
+                      </h3>
+                      <p style={{ margin: 0, color: '#374151', lineHeight: '1.6' }}>
+                        {extraVraag}
+                      </p>
+                    </div>
+                  )}
+
+                  {opslagStatus === 'bezig' && (
+                    <p role="status" style={{ textAlign: 'center', color: '#6B7280', margin: '20px 0' }}>
+                      Resultaat wordt veilig opgeslagen…
+                    </p>
+                  )}
+                  {opslagStatus === 'opgeslagen' && (
+                    <p role="status" style={{ textAlign: 'center', color: '#15803D', margin: '20px 0', fontWeight: '600' }}>
+                      Resultaat is anoniem opgeslagen voor latere analyse.
+                    </p>
+                  )}
+                  {opslagStatus === 'fout' && (
+                    <p role="alert" style={{ textAlign: 'center', color: '#DC2626', margin: '20px 0' }}>
+                      Het resultaat kon niet worden opgeslagen. Probeer het later opnieuw.
+                    </p>
+                  )}
+
                   <div style={{ textAlign: 'center', marginTop: '24px' }}>
                     <button
                       onClick={() => {
                         setAntwoorden({});
                         setHuidigThema(0);
+                        setExtraVraag('');
+                        setScanId(null);
+                        setOpslagStatus('niet-opgeslagen');
                         setPagina('intro');
                       }}
                       style={{

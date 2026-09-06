@@ -1,0 +1,5 @@
+[functions.submit-scan]
+verify_jwt = true
+
+[functions.send-results]
+verify_jwt = true
