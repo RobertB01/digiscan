@@ -425,6 +425,9 @@
           const [extraVraag, setExtraVraag] = useState('');
           const [scanId, setScanId] = useState(null);
           const [opslagStatus, setOpslagStatus] = useState('niet-opgeslagen');
+          const [emailAdres, setEmailAdres] = useState('');
+          const [emailStatus, setEmailStatus] = useState('idle');
+          const [emailFoutmelding, setEmailFoutmelding] = useState('');
 
           const apiConfig = window.DIGISCAN_CONFIG || {};
           const apiIsConfigured = Boolean(
@@ -562,6 +565,25 @@
               await saveResults();
             } catch (error) {
               console.error(error);
+            }
+          };
+
+          const verstuurEmail = async () => {
+            const adres = emailAdres.trim();
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adres)) {
+              setEmailStatus('fout');
+              setEmailFoutmelding('Vul een geldig e-mailadres in.');
+              return;
+            }
+            setEmailStatus('bezig');
+            setEmailFoutmelding('');
+            try {
+              const id = await saveResults();
+              await callApi('send-results', { scanId: id, email: adres });
+              setEmailStatus('verzonden');
+            } catch (error) {
+              setEmailStatus('fout');
+              setEmailFoutmelding(error.message || 'De e-mail kon niet worden verzonden. Probeer het later opnieuw.');
             }
           };
 
@@ -1214,6 +1236,74 @@
                     </p>
                   )}
 
+                  {apiIsConfigured && (
+                    <div style={{
+                      margin: '24px auto',
+                      maxWidth: '560px',
+                      background: 'white',
+                      borderRadius: '16px',
+                      padding: '24px',
+                      boxShadow: '0 4px 6px rgba(0,0,0,0.06)',
+                      textAlign: 'center'
+                    }}>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#111827', marginBottom: '10px' }}>
+                        Bedankt voor het invullen!
+                      </h3>
+                      {emailStatus === 'verzonden' ? (
+                        <p role="status" style={{ color: '#15803D', fontWeight: '600', margin: 0 }}>
+                          De e-mail met jouw resultaten is verzonden. Controleer eventueel je spamfolder.
+                        </p>
+                      ) : (
+                        <>
+                          <p style={{ color: '#4B5563', lineHeight: '1.6', marginBottom: '16px' }}>
+                            Wil je jouw resultaten, inclusief het spinnenweb, per e-mail ontvangen?
+                            Dit is optioneel. Je e-mailadres wordt alleen gebruikt om deze e-mail te
+                            versturen en wordt niet opgeslagen.
+                          </p>
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                            <input
+                              type="email"
+                              value={emailAdres}
+                              onChange={(e) => setEmailAdres(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === 'Enter') verstuurEmail(); }}
+                              placeholder="jouw@emailadres.nl"
+                              disabled={emailStatus === 'bezig'}
+                              aria-label="E-mailadres voor resultaten"
+                              style={{
+                                flex: '1 1 240px',
+                                maxWidth: '320px',
+                                padding: '12px 14px',
+                                borderRadius: '10px',
+                                border: '2px solid #E5E7EB',
+                                fontSize: '0.95rem'
+                              }}
+                            />
+                            <button
+                              onClick={verstuurEmail}
+                              disabled={emailStatus === 'bezig'}
+                              style={{
+                                padding: '12px 24px',
+                                borderRadius: '10px',
+                                border: 'none',
+                                background: emailStatus === 'bezig' ? '#9CA3AF' : 'linear-gradient(135deg, #1E88E5, #26A69A)',
+                                color: 'white',
+                                fontWeight: '600',
+                                cursor: emailStatus === 'bezig' ? 'wait' : 'pointer'
+                              }}
+                            >
+                              {emailStatus === 'bezig' ? 'Versturen…' : 'Verstuur'}
+                            </button>
+                          </div>
+                          {emailStatus === 'fout' && (
+                            <p role="alert" style={{ color: '#DC2626', marginTop: '12px', marginBottom: 0 }}>
+                              {emailFoutmelding}
+                            </p>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+
                   <div style={{ textAlign: 'center', marginTop: '24px' }}>
                     <button
                       onClick={() => {
@@ -1222,6 +1312,9 @@
                         setExtraVraag('');
                         setScanId(null);
                         setOpslagStatus('niet-opgeslagen');
+                        setEmailAdres('');
+                        setEmailStatus('idle');
+                        setEmailFoutmelding('');
                         setPagina('intro');
                       }}
                       style={{
