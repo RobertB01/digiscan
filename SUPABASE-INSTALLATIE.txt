@@ -10,7 +10,7 @@ STATUS 6 SEPTEMBER 2026
 - Edge Function submit-scan is gepubliceerd.
 - Opslag is getest via de API en via de volledige website.
 - De testgegevens zijn na controle verwijderd; de database is schoon.
-- Resultatenmail via Resend staat als TODO en is nog niet actief.
+- Resultatenmail via Strato-SMTP: zie de sectie RESULTATENMAIL hieronder.
 
 1. SUPABASE AANMAKEN
 
@@ -46,16 +46,57 @@ aan de Edge Functions. Zet die geheime waarden niet in de frontend.
 - Controleer in Supabase Table Editor of scans en responses worden gevuld.
 - Stel ALLOWED_ORIGIN exact in op de oorsprong van de website, zonder pad erachter.
 
-TODO: RESULTATENMAIL
+RESULTATENMAIL VIA STRATO-SMTP (meestersonline.nl)
 
-- Later Resend configureren met mail.meestersonline.nl.
-- Daarna de bestaande Edge Function send-results publiceren.
-- Pas daarna het e-mailveld weer zichtbaar maken op de resultatenpagina.
+De resultatenmail bevat een bedankbericht, het spinnenweb (server-side gegenereerd
+als PNG, dus op elk apparaat identiek), de scoretabel en de aanbevolen route.
+Verzenden gebeurt rechtstreeks via de SMTP-server van Strato met een eigen
+mailbox op meestersonline.nl. Er zijn GEEN DNS-wijzigingen nodig: Strato heeft
+SPF en DKIM voor de eigen mailservers al geregeld.
+
+Stap 1 - Mailbox aanmaken bij Strato
+- Log in op de Strato klantenlogin > pakket > E-mail > E-mailbeheer.
+- Maak een nieuwe mailbox aan, bijvoorbeeld: digiscan@meestersonline.nl.
+- Kies een sterk wachtwoord en noteer het (dit wordt een Supabase-secret).
+
+Stap 2 - Secrets instellen en functie publiceren
+Voer vanuit de projectmap uit:
+
+  npx supabase secrets set SMTP_HOST=smtp.strato.com
+  npx supabase secrets set SMTP_PORT=465
+  npx supabase secrets set SMTP_USER=digiscan@meestersonline.nl
+  npx supabase secrets set SMTP_PASS=HET_MAILBOX_WACHTWOORD
+  npx supabase secrets set "MAIL_FROM=DigiScan <digiscan@meestersonline.nl>"
+  npx supabase functions deploy send-results
+
+Let op: het afzenderadres in MAIL_FROM moet hetzelfde adres zijn als SMTP_USER,
+anders weigert Strato de verzending.
+
+Deploy-tip bij een zakelijk netwerk met eigen TLS-certificaat (foutmelding
+"TransportError"): zet eerst deze variabele en deploy daarna opnieuw:
+
+  $env:NODE_TLS_REJECT_UNAUTHORIZED='0'
+  npx supabase functions deploy send-results --project-ref dnmvliygdajdqrvzzagp
+
+Stap 3 - Testen
+- Vul op de website een volledige scan in.
+- Vul op de resultatenpagina een eigen e-mailadres in en klik op Verstuur.
+- Controleer de mail (en de spamfolder): bedanktekst, spinnenweb en scoretabel.
+- Controleer in Supabase of email_deliveries een regel heeft gekregen.
+
+Beperkingen die al zijn ingebouwd:
+- Maximaal 3 e-mails per individuele scan per 24 uur. Dit is een
+  anti-misbruikmaatregel per invuller (bijv. voor een tweede poging na een
+  typefout). Elke deelnemer heeft een eigen scan, dus een heel team kan
+  gewoon tegelijk invullen en mailen.
+- Strato hanteert eigen verzendlimieten per mailbox (ruim voldoende voor
+  normaal gebruik zoals een teamsessie).
+- E-mailadressen worden nooit in de database opgeslagen.
 
 PRIVACY
 
-- E-mailadressen worden alleen aan Resend doorgegeven voor directe verzending en
-  worden niet in de eigen database opgeslagen.
+- E-mailadressen worden alleen gebruikt voor directe verzending via de eigen
+  Strato-mailbox en worden niet in de database opgeslagen.
 - Leg in een privacyverklaring uit wat wordt opgeslagen, waarom, hoe lang en hoe
   een deelnemer een verwijderverzoek kan indienen.
 - Spreek een bewaartermijn af en verwijder oudere scans periodiek.

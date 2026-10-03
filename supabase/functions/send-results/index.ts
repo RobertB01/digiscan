@@ -1,5 +1,58 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { initWasm, Resvg } from 'npm:@resvg/resvg-wasm@2.6.2';
+import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
+import { buildRadarSvg } from './chart.js';
+
+const RESVG_WASM_URL = 'https://cdn.jsdelivr.net/npm/@resvg/resvg-wasm@2.6.2/index_bg.wasm';
+const FONT_REGULAR_URL = 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf';
+const FONT_BOLD_URL = 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf';
+
+// Eenmalig per instantie initialiseren en hergebruiken.
+// Wasm-init en font-download staan los: initWasm mag maar één keer slagen,
+// terwijl een mislukte font-download bij een volgende aanroep opnieuw mag.
+let wasmInit: Promise<void> | null = null;
+let fontSetup: Promise<Uint8Array[]> | null = null;
+const loadChartSetup = () => {
+  if (!wasmInit) {
+    wasmInit = initWasm(fetch(RESVG_WASM_URL));
+    wasmInit.catch(() => { wasmInit = null; });
+  }
+  if (!fontSetup) {
+    fontSetup = Promise.all([FONT_REGULAR_URL, FONT_BOLD_URL].map(async (url) => {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Font kon niet worden geladen: ${url}`);
+      return new Uint8Array(await response.arrayBuffer());
+    }));
+    fontSetup.catch(() => { fontSetup = null; });
+  }
+  return Promise.all([wasmInit, fontSetup]).then(([, fonts]) => fonts);
+};
+
+const toBase64 = (bytes: Uint8Array) => {
+  let binary = '';
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+};
+
+// Genereert het spinnenweb als PNG; bij een fout gaat de mail zonder afbeelding uit.
+const renderChartPng = async (ikScores: number[], schoolScores: number[]) => {
+  try {
+    const fontBuffers = await loadChartSetup();
+    const svg = buildRadarSvg(ikScores, schoolScores);
+    const resvg = new Resvg(svg, {
+      fitTo: { mode: 'width', value: 1280 },
+      font: { fontBuffers, defaultFontFamily: 'DejaVu Sans', loadSystemFonts: false }
+    });
+    return toBase64(resvg.render().asPng());
+  } catch (error) {
+    console.error('Spinnenweb genereren mislukt:', error);
+    return null;
+  }
+};
 
 const THEME_NAMES = [
   'Visie en koers',
@@ -70,6 +123,7 @@ Deno.serve(async (request) => {
     const individualScores = scan.individual_scores as number[];
     const schoolScores = scan.school_scores as number[];
     const scores = scan.scores as number[];
+    const chartPng = await renderChartPng(individualScores, schoolScores);
     const rows = THEME_NAMES.map((name, index) => `
       <tr>
         <td style="padding:10px;border-bottom:1px solid #e5e7eb">${index + 1}. ${escapeHtml(name)}</td>
@@ -84,6 +138,8 @@ Deno.serve(async (request) => {
           <p style="margin:8px 0 0">${escapeHtml(scan.bouw)} · totaalscore ${Number(scan.overall_score).toFixed(1)}</p>
         </div>
         <div style="background:white;padding:24px;border-radius:0 0 16px 16px">
+          <p style="margin:0 0 18px;line-height:1.6">Bedankt voor het invullen van de nulmeting! Hieronder vind je jouw resultaten, inclusief het spinnenweb met de scores per thema.</p>
+          ${chartPng ? '<div style="text-align:center;margin-bottom:18px"><img src="cid:spinnenweb" alt="Spinnenweb met jouw scores per thema" style="width:100%;max-width:560px;height:auto" /></div>' : ''}
           <table style="width:100%;border-collapse:collapse;font-size:14px">
             <thead><tr style="background:#f9fafb"><th style="padding:10px;text-align:left">Thema</th><th>Ik</th><th>School</th><th style="text-align:left">Niveau</th></tr></thead>
             <tbody>${rows}</tbody>
@@ -96,28 +152,45 @@ Deno.serve(async (request) => {
         </div>
       </div></body></html>`;
 
-    const resendResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from: Deno.env.get('RESEND_FROM'),
-        to: [cleanEmail],
-        subject: 'Jouw resultaten – Nulmeting Digitale Geletterdheid',
-        html
-      })
-    });
-    const resendResult = await resendResponse.json();
-    if (!resendResponse.ok) {
-      console.error(resendResult);
+    try {
+      const smtp = new SMTPClient({
+        connection: {
+          hostname: Deno.env.get('SMTP_HOST') || 'smtp.strato.com',
+          port: Number(Deno.env.get('SMTP_PORT') || '465'),
+          tls: true,
+          auth: {
+            username: Deno.env.get('SMTP_USER')!,
+            password: Deno.env.get('SMTP_PASS')!
+          }
+        }
+      });
+      try {
+        await smtp.send({
+          from: Deno.env.get('MAIL_FROM') || Deno.env.get('SMTP_USER')!,
+          to: cleanEmail,
+          subject: 'Jouw resultaten – Nulmeting Digitale Geletterdheid',
+          html,
+          ...(chartPng ? {
+            attachments: [{
+              encoding: 'base64' as const,
+              content: chartPng,
+              contentType: 'image/png',
+              filename: 'digiscan-spinnenweb.png',
+              contentID: 'spinnenweb'
+            }]
+          } : {})
+        });
+      } finally {
+        await smtp.close().catch(() => {});
+      }
+    } catch (mailError) {
+      console.error(mailError);
       return jsonResponse({ error: 'De e-mail kon niet worden verzonden.' }, 502);
     }
 
     await supabase.from('email_deliveries').insert({
       scan_id: scanId,
-      provider_message_id: resendResult.id || null
+      provider_message_id: null
     });
     return jsonResponse({ sent: true });
   } catch (error) {
