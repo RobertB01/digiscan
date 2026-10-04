@@ -125,17 +125,22 @@ Deno.serve(async (request) => {
     const html = `<!doctype html><html lang="nl"><body style="margin:0;background:#f3f4f6;font-family:Arial,sans-serif;color:#1f2937">
       <div style="max-width:720px;margin:0 auto;padding:24px">
         <div style="background:linear-gradient(135deg,#1E88E5,#26A69A);padding:28px;border-radius:16px 16px 0 0;color:white">
-          <h1 style="margin:0;font-size:24px">Jouw DigiScan-resultaten</h1>
+          <h1 style="margin:0;font-size:24px">Nulmeting MeestersOnline</h1>
           <p style="margin:8px 0 0">${escapeHtml(scan.bouw)} · totaalscore ${Number(scan.overall_score).toFixed(1)}</p>
         </div>
         <div style="background:white;padding:24px;border-radius:0 0 16px 16px">
-          <p style="margin:0 0 18px;line-height:1.6">Bedankt voor het invullen van de nulmeting! Hieronder vind je jouw resultaten, inclusief het spinnenweb met de scores per thema.</p>
+          <p style="margin:0 0 18px;line-height:1.6">Beste leerkracht,</p>
+          <p style="margin:0 0 18px;line-height:1.6">Bedankt voor het invullen van de nulmeting van Meesters Online.</p>
+          <p style="margin:0 0 18px;line-height:1.6">Hieronder zie je jouw resultaten in het spinnenweb. Deze geven inzicht in waar je op dit moment staat, zowel individueel als binnen de school.</p>
           ${chartPng ? '<div style="text-align:center;margin-bottom:18px"><img src="cid:spinnenweb" alt="Spinnenweb met jouw scores per thema" style="width:100%;max-width:560px;height:auto" /></div>' : ''}
           <table style="width:100%;border-collapse:collapse;font-size:14px">
             <thead><tr style="background:#f9fafb"><th style="padding:10px;text-align:left">Thema</th><th>Ik</th><th>School</th><th style="text-align:left">Niveau</th></tr></thead>
             <tbody>${rows}</tbody>
           </table>
           ${scan.extra_answer ? `<div style="margin-top:18px"><strong>Jouw opmerking</strong><p style="line-height:1.6">${escapeHtml(scan.extra_answer)}</p></div>` : ''}
+          <p style="margin-top:22px;line-height:1.6">Gebruik deze uitkomsten als startpunt voor verdere ontwikkeling.</p>
+          <p style="margin:0 0 18px;line-height:1.6">Veel succes!</p>
+          <p style="margin:0;line-height:1.6">Hartelijke groet,<br>Stefan<br>Meesters Online</p>
           <p style="margin-top:24px;color:#6b7280;font-size:12px">Dit bericht is automatisch verstuurd. Je e-mailadres is niet opgeslagen.</p>
         </div>
       </div></body></html>`;
@@ -156,7 +161,7 @@ Deno.serve(async (request) => {
         await smtp.send({
           from: Deno.env.get('MAIL_FROM') || Deno.env.get('SMTP_USER')!,
           to: cleanEmail,
-          subject: 'Jouw resultaten – Nulmeting Digitale Geletterdheid',
+          subject: 'Nulmeting MeestersOnline',
           html,
           ...(chartPng ? {
             attachments: [{
