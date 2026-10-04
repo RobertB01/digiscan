@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nulmeting Digitale Geletterdheid - Basisonderwijs</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -57,6 +59,10 @@
           teal: '#26A69A', 
           geel: '#FBC02D'
         };
+
+        // Vanaf dit moment is de nulmeting gesloten en toont de site een melding.
+        // Pas deze datum aan (of zet hem ver in de toekomst) om de site weer te openen.
+        const SLUITINGSDATUM = new Date('2026-10-06T00:00:00');
 
         // Alle 60 stellingen gegroepeerd per thema met ik/school markering
         const themas = [
@@ -586,6 +592,39 @@
               setEmailFoutmelding(error.message || 'De e-mail kon niet worden verzonden. Probeer het later opnieuw.');
             }
           };
+
+          // Gesloten vanaf de sluitingsdatum (na de hooks, zodat React consistent blijft)
+          if (new Date() >= SLUITINGSDATUM) {
+            return (
+              <div style={{
+                minHeight: '100vh',
+                background: 'linear-gradient(135deg, #1E88E5 0%, #26A69A 100%)',
+                padding: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+              }}>
+                <div style={{
+                  maxWidth: '480px',
+                  background: 'white',
+                  borderRadius: '24px',
+                  padding: '40px 32px',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                  textAlign: 'center'
+                }}>
+                  <img src="logo-meestersonline.png" alt="Meesters Online" style={{ height: '48px', marginBottom: '20px' }} />
+                  <h1 style={{ fontSize: '1.4rem', fontWeight: '700', color: '#1E88E5', marginBottom: '12px' }}>
+                    Deze nulmeting is afgerond
+                  </h1>
+                  <p style={{ color: '#4B5563', lineHeight: '1.6', margin: 0 }}>
+                    De nulmeting is al afgenomen en kan niet meer worden ingevuld.
+                    Bedankt voor je interesse.
+                  </p>
+                </div>
+              </div>
+            );
+          }
 
           // Intro pagina
           if (pagina === 'intro') {
