@@ -63,15 +63,6 @@ const THEME_NAMES = [
   'Ontwikkeling, evaluatie en borging'
 ];
 
-const ROUTE_NAMES = [
-  'Visie eerst',
-  'Teambekwaamheid versterken',
-  'Van losse activiteiten naar lespraktijk',
-  'Inhoud verbreden en verdiepen',
-  'Structuur en randvoorwaarden op orde',
-  'Borgen, volgen en doorontwikkelen'
-];
-
 const escapeHtml = (value: unknown) => String(value ?? '')
   .replaceAll('&', '&amp;')
   .replaceAll('<', '&lt;')
@@ -144,9 +135,6 @@ Deno.serve(async (request) => {
             <thead><tr style="background:#f9fafb"><th style="padding:10px;text-align:left">Thema</th><th>Ik</th><th>School</th><th style="text-align:left">Niveau</th></tr></thead>
             <tbody>${rows}</tbody>
           </table>
-          <div style="margin-top:22px;padding:16px;background:#eff6ff;border-left:4px solid #1E88E5">
-            <strong>Aanbevolen route ${scan.recommended_route}:</strong> ${escapeHtml(ROUTE_NAMES[scan.recommended_route - 1])}
-          </div>
           ${scan.extra_answer ? `<div style="margin-top:18px"><strong>Jouw opmerking</strong><p style="line-height:1.6">${escapeHtml(scan.extra_answer)}</p></div>` : ''}
           <p style="margin-top:24px;color:#6b7280;font-size:12px">Dit bericht is automatisch verstuurd. Je e-mailadres is niet opgeslagen.</p>
         </div>
