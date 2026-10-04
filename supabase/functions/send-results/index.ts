@@ -181,7 +181,7 @@ Deno.serve(async (request) => {
           } : {})
         });
       } finally {
-        await smtp.close().catch(() => {});
+        try { await smtp.close(); } catch (_) { /* verbinding sluiten mag stil falen */ }
       }
     } catch (mailError) {
       console.error(mailError);
