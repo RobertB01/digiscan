@@ -450,6 +450,17 @@
             });
           }, [antwoorden]);
 
+          const totaleVoortgang = useMemo(() => {
+            const totaalVragen = themas.reduce((acc, t) => acc + t.vragen.length, 0);
+            return (Object.keys(antwoorden).length / totaalVragen) * 100;
+          }, [antwoorden]);
+
+          // Verder dan dit thema kan niet: alle eerdere thema's moeten compleet zijn
+          const maxBereikbaarThema = useMemo(() => {
+            const eersteOnvoltooide = voortgangPerThema.findIndex(p => p < 100);
+            return eersteOnvoltooide === -1 ? themas.length - 1 : eersteOnvoltooide;
+          }, [voortgangPerThema]);
+
           // Scores worden berekend als gemiddelde van antwoorden (1-5) en getoond op een 1-10 schaal
           const scoresPerThema = useMemo(() => {
             return themas.map(thema => {
@@ -810,7 +821,8 @@
                       {themas.map((t, index) => (
                         <button
                           key={t.id}
-                          onClick={() => setHuidigThema(index)}
+                          onClick={() => { if (index <= maxBereikbaarThema) setHuidigThema(index); }}
+                          disabled={index > maxBereikbaarThema}
                           style={{
                             padding: '8px 16px',
                             borderRadius: '8px',
@@ -819,7 +831,8 @@
                             color: huidigThema === index ? t.kleur : '#6B7280',
                             fontWeight: '500',
                             fontSize: '0.85rem',
-                            cursor: 'pointer',
+                            cursor: index <= maxBereikbaarThema ? 'pointer' : 'not-allowed',
+                            opacity: index <= maxBereikbaarThema ? 1 : 0.45,
                             whiteSpace: 'nowrap',
                             display: 'flex',
                             alignItems: 'center',
@@ -843,7 +856,7 @@
                         marginBottom: '4px'
                       }}>
                         <span>Thema {thema.id}: {thema.naam}</span>
-                        <span>{Math.round(voortgangPerThema[huidigThema])}% voltooid</span>
+                        <span>{Math.round(totaleVoortgang)}% voltooid</span>
                       </div>
                       <div style={{ 
                         height: '8px', 
@@ -853,7 +866,7 @@
                       }}>
                         <div style={{ 
                           height: '100%', 
-                          width: `${voortgangPerThema[huidigThema]}%`,
+                          width: `${totaleVoortgang}%`,
                           background: thema.kleur,
                           borderRadius: '4px',
                           transition: 'width 0.3s ease'
@@ -1023,16 +1036,17 @@
                     {huidigThema < themas.length - 1 ? (
                       <button
                         onClick={() => { setHuidigThema(huidigThema + 1); window.scrollTo(0, 0); }}
+                        disabled={voortgangPerThema[huidigThema] < 100}
                         style={{
                           flex: 1,
                           minWidth: '120px',
                           padding: '14px 24px',
                           borderRadius: '10px',
                           border: 'none',
-                          background: thema.kleur,
+                          background: voortgangPerThema[huidigThema] === 100 ? thema.kleur : '#D1D5DB',
                           color: 'white',
                           fontWeight: '600',
-                          cursor: 'pointer'
+                          cursor: voortgangPerThema[huidigThema] === 100 ? 'pointer' : 'not-allowed'
                         }}
                       >
                         Volgende thema →
@@ -1068,6 +1082,16 @@
                       marginTop: '12px' 
                     }}>
                       Beantwoord alle vragen om de resultaten te bekijken
+                    </p>
+                  )}
+                  {voortgangPerThema[huidigThema] < 100 && huidigThema < themas.length - 1 && (
+                    <p style={{ 
+                      textAlign: 'center', 
+                      color: '#EF4444', 
+                      fontSize: '0.9rem', 
+                      marginTop: '12px' 
+                    }}>
+                      Beantwoord alle stellingen van dit thema om verder te gaan
                     </p>
                   )}
                 </div>
